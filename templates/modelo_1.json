@@ -1,0 +1,6 @@
+{
+  "name": "modelo_1",
+  "template": "{{tratamento}} {{nome}}, {{nacionalidade}}, {{estado_civil}}, natural de {{naturalidade}}, nascid{{genero_terminacao}} aos {{data_nascimento}}, filh{{genero_terminacao}} de {{nome_pai}} e da Sra. {{nome_mae}}, portador{{sufixo_a}} da CI/RG n.º {{rg}}/{{orgao_rg}}-{{uf_rg}}, inscrit{{genero_terminacao}} no CPF/MF sob o n.º {{cpf}}, {{profissao}}, residente e domiciliad{{genero_terminacao}} a {{logradouro}}, n.º {{numero}}, Bairro {{bairro}}, na cidade de {{cidade}} – CEP: {{cep}} – com endereço eletrônico: {{email}};"
+}
+
+
