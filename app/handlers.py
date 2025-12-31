@@ -251,8 +251,18 @@ class EventHandlers:
         data = self.values_from_inputs()
         data.setdefault("cert_matricula", "")
         data.setdefault("cert_data", "")
+        
+        # Verificar se CNH está ativado
+        cnh_enabled = self.app.cnh_enabled_certidao.get()
+        
         try:
-            output = render_template(self.app.template_text_cert, data, strict=False)
+            if cnh_enabled:
+                data.setdefault("cnh_uf", "MT")
+                data.setdefault("cnh_numero", "")
+                data.setdefault("cnh_data_expedicao", "")
+                output = render_template(self.app.template_text_cert_cnh, data, strict=False)
+            else:
+                output = render_template(self.app.template_text_cert, data, strict=False)
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("Erro", f"Erro ao gerar texto (Certidão): {exc}")
             return
@@ -327,12 +337,8 @@ class EventHandlers:
         data["conjuge_artigo"] = "a sua esposa" if genero2 == "a" else "o seu esposo"
 
         # Verificar quais pessoas têm CNH ativada
-        cnh1_enabled = getattr(
-            self.app, "cnh_enabled1", tk.BooleanVar(value=False)
-        ).get()
-        cnh2_enabled = getattr(
-            self.app, "cnh_enabled2", tk.BooleanVar(value=False)
-        ).get()
+        cnh1_enabled = self.app.cnh_enabled1.get()
+        cnh2_enabled = self.app.cnh_enabled2.get()
 
         # Gerar texto dinamicamente baseado nos switches CNH
         try:
@@ -353,6 +359,14 @@ class EventHandlers:
         self, data: Dict, cnh1_enabled: bool, cnh2_enabled: bool
     ) -> str:
         """Gera texto para casados baseado nos switches CNH"""
+        
+        # Verificar se deve usar o modelo alternativo
+        use_alternativo = getattr(
+            self.app, "casados_modelo_alternativo", tk.BooleanVar(value=False)
+        ).get()
+        
+        if use_alternativo:
+            return self._generate_casados_text_alternativo(data, cnh1_enabled, cnh2_enabled)
 
         # Gerar texto da pessoa 1
         pessoa1_text = self._generate_pessoa_text(data, 1, cnh1_enabled)
@@ -364,11 +378,11 @@ class EventHandlers:
         conjuge_artigo = data.get("conjuge_artigo", "a sua esposa")
         regime_casamento = data.get("regime_casamento", "")
         cert_matricula = data.get("cert_casamento_matricula", "")
-        logradouro = data.get("logradouro_casados", "")
-        numero = data.get("numero_casados", "")
-        bairro = data.get("bairro_casados", "")
-        cidade = data.get("cidade_casados", "")
-        cep = data.get("cep_casados", "")
+        logradouro = data.get("logradouro", "")
+        numero = data.get("numero", "")
+        bairro = data.get("bairro", "")
+        cidade = data.get("cidade", "")
+        cep = data.get("cep", "")
 
         return (
             f"{pessoa1_text}; e {conjuge_artigo} {pessoa2_text}; brasileiros, "
@@ -378,6 +392,118 @@ class EventHandlers:
             f"{cert_matricula}, "
             f"expedidas nestas Notas), residentes e domiciliados à {logradouro}, "
             f"n.º {numero}, {bairro}, na cidade de {cidade} – CEP: {cep}"
+        )
+    
+    def _generate_casados_text_alternativo(
+        self, data: Dict, cnh1_enabled: bool, cnh2_enabled: bool
+    ) -> str:
+        """Gera texto para casados no formato alternativo"""
+        
+        # Obter dados da pessoa 1
+        tratamento1 = data.get("tratamento1", "Sr.")
+        nome1 = data.get("nome1", "")
+        genero1 = data.get("genero_terminacao1", "o")
+        nacionalidade1 = "brasileiro" if genero1 == "o" else "brasileira"
+        naturalidade1 = data.get("naturalidade1", "")
+        data_nascimento1 = data.get("data_nascimento1", "")
+        nome_pai1 = data.get("nome_pai1", "")
+        nome_mae1 = data.get("nome_mae1", "")
+        sufixo_a1 = "" if genero1 == "o" else "a"
+        rg1 = data.get("rg1", "")
+        orgao_rg1 = data.get("orgao_rg1", "SSP")
+        uf_rg1 = data.get("uf_rg1", "MT")
+        cpf1 = data.get("cpf1", "")
+        profissao1 = data.get("profissao1", "")
+        email1 = data.get("email1", "")
+        
+        # Obter dados da pessoa 2
+        tratamento2 = data.get("tratamento2", "Sra.")
+        nome2 = data.get("nome2", "")
+        genero2 = data.get("genero_terminacao2", "a")
+        nacionalidade2 = "brasileiro" if genero2 == "o" else "brasileira"
+        naturalidade2 = data.get("naturalidade2", "")
+        data_nascimento2 = data.get("data_nascimento2", "")
+        nome_pai2 = data.get("nome_pai2", "")
+        nome_mae2 = data.get("nome_mae2", "")
+        sufixo_a2 = "" if genero2 == "o" else "a"
+        rg2 = data.get("rg2", "")
+        orgao_rg2 = data.get("orgao_rg2", "SSP")
+        uf_rg2 = data.get("uf_rg2", "MT")
+        cpf2 = data.get("cpf2", "")
+        profissao2 = data.get("profissao2", "")
+        email2 = data.get("email2", "")
+        
+        # Dados do casamento
+        regime_casamento = data.get("regime_casamento", "")
+        cert_matricula = data.get("cert_casamento_matricula", "")
+        # Usar campos de endereço - o formulário usa as mesmas chaves do modelo base
+        logradouro = data.get("logradouro", "")
+        numero = data.get("numero", "")
+        bairro = data.get("bairro", "")
+        cidade = data.get("cidade", "")
+        cep = data.get("cep", "")
+        
+        # Gerar texto da pessoa 1
+        if cnh1_enabled:
+            cnh_uf1 = data.get("cnh_uf1", "MT")
+            cnh_numero1 = data.get("cnh_numero1", "")
+            cnh_data1 = data.get("cnh_data_expedicao1", "")
+            pessoa1_text = (
+                f"{tratamento1} {nome1}, {nacionalidade1}, natural de {naturalidade1}, "
+                f"nascid{genero1} aos {data_nascimento1}, "
+                f"filh{genero1} de {nome_pai1} e da Sra. {nome_mae1}, "
+                f"portador{sufixo_a1} da CNH-{cnh_uf1} n.º {cnh_numero1}, "
+                f"expedida em {cnh_data1}, onde consta o RG n.º "
+                f"{rg1}/{orgao_rg1}-{uf_rg1}, "
+                f"inscrit{genero1} no CPF/MF sob o n.º {cpf1}, {profissao1} "
+                f"– com endereço eletrônico: {email1}"
+            )
+        else:
+            pessoa1_text = (
+                f"{tratamento1} {nome1}, {nacionalidade1}, natural de {naturalidade1}, "
+                f"nascid{genero1} aos {data_nascimento1}, "
+                f"filh{genero1} de {nome_pai1} e da Sra. {nome_mae1}, "
+                f"portador{sufixo_a1} da CI/RG n.º {rg1}/{orgao_rg1}-{uf_rg1}, "
+                f"inscrit{genero1} no CPF/MF sob o n.º {cpf1}, {profissao1} "
+                f"– com endereço eletrônico: {email1}"
+            )
+        
+        # Gerar texto da pessoa 2
+        if cnh2_enabled:
+            cnh_uf2 = data.get("cnh_uf2", "MT")
+            cnh_numero2 = data.get("cnh_numero2", "")
+            cnh_data2 = data.get("cnh_data_expedicao2", "")
+            pessoa2_text = (
+                f"{tratamento2} {nome2}, {nacionalidade2}, natural de {naturalidade2}, "
+                f"nascid{genero2} aos {data_nascimento2}, "
+                f"filh{genero2} de {nome_pai2} e da Sra. {nome_mae2}, "
+                f"portador{sufixo_a2} da CNH-{cnh_uf2} n.º {cnh_numero2}, "
+                f"expedida em {cnh_data2}, onde consta o RG n.º "
+                f"{rg2}/{orgao_rg2}-{uf_rg2}, "
+                f"inscrit{genero2} no CPF/MF sob o n.º {cpf2}, {profissao2} "
+                f"– com endereço eletrônico: {email2}"
+            )
+        else:
+            pessoa2_text = (
+                f"{tratamento2} {nome2}, {nacionalidade2}, natural de {naturalidade2}, "
+                f"nascid{genero2} aos {data_nascimento2}, "
+                f"filh{genero2} de {nome_pai2} e da Sra. {nome_mae2}, "
+                f"portador{sufixo_a2} da CI/RG n.º {rg2}/{orgao_rg2}-{uf_rg2}, "
+                f"inscrit{genero2} no CPF/MF sob o n.º {cpf2}, {profissao2} "
+                f"– com endereço eletrônico: {email2}"
+            )
+        
+        # Determinar artigo para pessoa 2 baseado no gênero
+        artigo_conjuge = "a" if genero2 == "a" else "o"
+        
+        # Texto final no formato alternativo
+        return (
+            f"{pessoa1_text}; casado sob o regime da {regime_casamento}, "
+            f"na vigência da Lei n.º 6.515/77 "
+            f"(conforme Certidão de Casamento lavrada sob a Matrícula n.º "
+            f"{cert_matricula}, expedidas nestas Notas), com {artigo_conjuge} {pessoa2_text}; "
+            f"residentes e domiciliados à {logradouro}, n.º {numero}, {bairro}, "
+            f"na cidade de {cidade} – CEP: {cep}"
         )
 
     def _generate_pessoa_text(
@@ -492,12 +618,29 @@ class EventHandlers:
             if self.app.vars["nome_caps"].get():
                 data["nome_representante"] = (data.get("nome_representante") or "").upper()
 
+            # Mapear campos de endereço compartilhados para os campos específicos do template de empresa
+            # O formulário da empresa agora usa as chaves compartilhadas (logradouro, numero, etc.)
+            data["logradouro_empresa"] = data.get("logradouro", "")
+            data["numero_empresa"] = data.get("numero", "")
+            data["bairro_empresa"] = data.get("bairro", "")
+            data["cidade_empresa"] = data.get("cidade", "")
+            data["cep_empresa"] = data.get("cep", "")
+
             # Calcular sufixos e artigos para o template
             genero = data.get("genero_terminacao", "a")
             data["sufixo_a"] = "" if genero == "o" else "a"
 
+            # Verificar se CNH está ativado
+            cnh_enabled = self.app.cnh_enabled_empresa.get()
+
             try:
-                output = render_template(self.app.template_text_empresa, data, strict=False)
+                if cnh_enabled:
+                    data.setdefault("cnh_uf", "MT")
+                    data.setdefault("cnh_numero", "")
+                    data.setdefault("cnh_data_expedicao", "")
+                    output = render_template(self.app.template_text_empresa, data, strict=False)
+                else:
+                    output = render_template(self.app.template_text_empresa_sem_cnh, data, strict=False)
             except KeyError as e:
                 logger.error(f"Campo obrigatório faltando no template empresa: {e}")
                 messagebox.showerror("Erro", f"Campo obrigatório faltando: {e}")

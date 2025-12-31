@@ -13,16 +13,16 @@ except ImportError:
 
 
 def build_tab_casados(notebook: ctk.CTkTabview, tab_casados: ctk.CTkFrame, app) -> None:
-    container = ctk.CTkFrame(tab_casados, corner_radius=12, fg_color="#2d2d2d")
+    container = ctk.CTkFrame(tab_casados, corner_radius=16, fg_color="#2d2d2d")
     container.pack(fill="both", expand=True, padx=10, pady=5)
 
     # Scroll para acomodar todos os campos
     scroll_container = ctk.CTkScrollableFrame(
-        container, corner_radius=8, fg_color="#3a3a3a"
+        container, corner_radius=16, fg_color="#3a3a3a"
     )
     scroll_container.pack(side="left", fill="both", expand=True)
 
-    right = ctk.CTkFrame(container, corner_radius=8, fg_color="#3a3a3a")
+    right = ctk.CTkFrame(container, corner_radius=16, fg_color="#3a3a3a")
     right.pack(side="left", fill="both", expand=True, padx=(10, 0))
 
     _build_casados_form(scroll_container, app)
@@ -42,7 +42,7 @@ def _build_casados_form(parent: ctk.CTkScrollableFrame, app) -> None:
     row = 0
 
     # Switch CNH Pessoa 1
-    switch_frame1 = ctk.CTkFrame(parent, corner_radius=8, fg_color="#2d2d2d")
+    switch_frame1 = ctk.CTkFrame(parent, corner_radius=16, fg_color="#2d2d2d")
     switch_frame1.grid(row=row, column=0, columnspan=2, sticky="ew", padx=15, pady=5)
     ctk.CTkSwitch(
         master=switch_frame1,
@@ -54,7 +54,7 @@ def _build_casados_form(parent: ctk.CTkScrollableFrame, app) -> None:
         progress_color="#1f6aa5",
         button_color="#1f6aa5",
         button_hover_color="#1a5a8a",
-        corner_radius=8,
+        corner_radius=16,
     ).pack(anchor="w", padx=10, pady=8)
     row += 1
 
@@ -124,7 +124,7 @@ def _build_casados_form(parent: ctk.CTkScrollableFrame, app) -> None:
         widget.grid_remove()
 
     # Switch CNH Pessoa 2
-    switch_frame2 = ctk.CTkFrame(parent, corner_radius=8, fg_color="#2d2d2d")
+    switch_frame2 = ctk.CTkFrame(parent, corner_radius=12, fg_color="#2d2d2d")
     switch_frame2.grid(row=row, column=0, columnspan=2, sticky="ew", padx=15, pady=5)
     ctk.CTkSwitch(
         master=switch_frame2,
@@ -136,7 +136,7 @@ def _build_casados_form(parent: ctk.CTkScrollableFrame, app) -> None:
         progress_color="#1f6aa5",
         button_color="#1f6aa5",
         button_hover_color="#1a5a8a",
-        corner_radius=8,
+        corner_radius=16,
     ).pack(anchor="w", padx=10, pady=8)
     row += 1
 
@@ -191,7 +191,24 @@ def _build_casados_form(parent: ctk.CTkScrollableFrame, app) -> None:
     for widget, _, _, _ in app.cnh2_widgets:
         widget.grid_remove()
 
-    # Dados do casamento e endereço compartilhado
+    # Switch modelo alternativo
+    switch_modelo_frame = ctk.CTkFrame(parent, corner_radius=16, fg_color="#2d2d2d")
+    switch_modelo_frame.grid(row=row, column=0, columnspan=2, sticky="ew", padx=15, pady=5)
+    ctk.CTkSwitch(
+        master=switch_modelo_frame,
+        text="Usar modelo alternativo",
+        variable=app.casados_modelo_alternativo,
+        command=lambda: _toggle_modelo_and_generate(app),
+        font=("Segoe UI", 11, "bold"),
+        text_color="#ffffff",
+        progress_color="#1f6aa5",
+        button_color="#1f6aa5",
+        button_hover_color="#1a5a8a",
+        corner_radius=16,
+    ).pack(anchor="w", padx=10, pady=8)
+    row += 1
+
+    # Dados do casamento e endereço compartilhado (reutilizam as mesmas chaves do MODELO)
     app.form_builder.build_from_definition(parent, _CASAMENTO_FIELDS, start_row=row)
     parent.grid_columnconfigure(1, weight=1)
 
@@ -225,6 +242,13 @@ def _toggle_cnh_pessoa2_and_generate(app):
     _toggle_cnh_pessoa2(app)
     # Gerar automaticamente se houver dados
     if app.vars.get("nome2", tk.StringVar()).get():
+        app.handlers.on_generate_casados()
+
+
+def _toggle_modelo_and_generate(app):
+    """Toggle modelo alternativo e gera texto automaticamente se houver dados"""
+    # Gerar automaticamente se houver dados
+    if app.vars.get("nome1", tk.StringVar()).get() or app.vars.get("nome2", tk.StringVar()).get():
         app.handlers.on_generate_casados()
 
 
@@ -364,6 +388,7 @@ _PESSOA2_FIELDS_BASE = (
     {"type": "entry", "label": "E-mail Pessoa 2", "key": "email2", "expand": True},
 )
 
+# Importante: usar as MESMAS chaves do MODELO para herdar os valores preenchidos
 _CASAMENTO_FIELDS = (
     {
         "type": "combo",
@@ -385,11 +410,11 @@ _CASAMENTO_FIELDS = (
     {
         "type": "entry",
         "label": "Logradouro",
-        "key": "logradouro_casados",
+        "key": "logradouro",  # herda do MODELO
         "expand": True,
     },
-    {"type": "entry", "label": "Número", "key": "numero_casados", "width": 120},
-    {"type": "entry", "label": "Bairro", "key": "bairro_casados", "expand": True},
-    {"type": "entry", "label": "Cidade", "key": "cidade_casados", "expand": True},
-    {"type": "entry", "label": "CEP", "key": "cep_casados", "width": 160},
+    {"type": "entry", "label": "Número", "key": "numero", "width": 120},  # herda
+    {"type": "entry", "label": "Bairro", "key": "bairro", "expand": True},  # herda
+    {"type": "entry", "label": "Cidade", "key": "cidade", "expand": True},  # herda
+    {"type": "entry", "label": "CEP", "key": "cep", "width": 160},  # herda
 )

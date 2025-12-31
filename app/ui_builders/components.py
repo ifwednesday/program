@@ -39,7 +39,7 @@ class EntryFactory:
         parent: Any,
         textvariable,
         width: int = 200,
-        height: int = 32,
+        height: int = 38,
         state: str = "normal",
         field_type: str = "text",
     ) -> ctk.CTkEntry:
@@ -48,7 +48,7 @@ class EntryFactory:
             textvariable=textvariable,
             width=width,
             height=height,
-            corner_radius=8,
+            corner_radius=19,
             border_width=2,
             border_color="#4a4a4a",
             fg_color="#2a2a2a",
@@ -97,7 +97,7 @@ class ComboFactory:
         variable,
         values: Sequence[str],
         width: int = 120,
-        height: int = 32,
+        height: int = 38,
         state: str = "readonly",
         enable_search: bool = True,
     ) -> ctk.CTkComboBox:
@@ -107,7 +107,7 @@ class ComboFactory:
             values=list(values),
             width=width,
             height=height,
-            corner_radius=8,
+            corner_radius=19,
             border_width=2,
             border_color="#4a4a4a",
             fg_color="#2a2a2a",
@@ -167,7 +167,7 @@ class ButtonFactory:
         hover_color: str,
         text_color: str = "#ffffff",
         state: str = "normal",
-        corner_radius: int = 8,
+        corner_radius: int = 20,
         font: Optional[Union[Tuple[str, int], Tuple[str, int, str]]] = None,
     ) -> ctk.CTkButton:
         return ctk.CTkButton(
@@ -180,4 +180,5 @@ class ButtonFactory:
             font=font or self.font,
             state=state,
             corner_radius=corner_radius,
+            height=38,
         )

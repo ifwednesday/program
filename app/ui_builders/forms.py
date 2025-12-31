@@ -164,6 +164,8 @@ class FormBuilder:
                 hover_color="#1a5a8a",
                 text_color="#ffffff",
                 font=("Segoe UI", 11),
+                corner_radius=8,
+                border_width=2,
             ).grid(row=row, column=0, columnspan=2, sticky="w", padx=15, pady=2)
             return row + 1
 

@@ -4,16 +4,16 @@ import customtkinter as ctk
 
 
 def build_tab_imovel(notebook: ctk.CTkTabview, tab_imovel: ctk.CTkFrame, app) -> None:
-    container = ctk.CTkFrame(tab_imovel, corner_radius=12, fg_color="#2d2d2d")
+    container = ctk.CTkFrame(tab_imovel, corner_radius=16, fg_color="#2d2d2d")
     container.pack(fill="both", expand=True, padx=10, pady=5)
 
     # Scroll para acomodar todos os campos
     scroll_container = ctk.CTkScrollableFrame(
-        container, corner_radius=8, fg_color="#3a3a3a"
+        container, corner_radius=16, fg_color="#3a3a3a"
     )
     scroll_container.pack(side="left", fill="both", expand=True)
 
-    right = ctk.CTkFrame(container, corner_radius=8, fg_color="#3a3a3a")
+    right = ctk.CTkFrame(container, corner_radius=16, fg_color="#3a3a3a")
     right.pack(side="left", fill="both", expand=True, padx=(10, 0))
 
     _build_imovel_form(scroll_container, app)

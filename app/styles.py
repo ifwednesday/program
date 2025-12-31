@@ -6,7 +6,7 @@ import customtkinter as ctk
 
 def setup_styles(app: tk.Tk) -> None:
     ctk.set_appearance_mode("dark")
-    ctk.set_default_color_theme("dark-blue")
+    # Removido set_default_color_theme para permitir corner_radius customizado
 
     try:
         default_font = tkfont.nametofont("TkDefaultFont")

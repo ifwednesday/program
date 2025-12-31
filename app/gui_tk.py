@@ -87,7 +87,7 @@ class App(tk.Tk):
         self.history = get_history_manager()
         logger.info(f"Histórico carregado: {len(self.history._history)} entradas")
         
-        self.title("Qualificador - by: ifwedesnay")
+        self.title("Qualificador - by: ifwednesday")
 
         # Obter dimensões da janela da configuração
         window_width = self.config.get("ui.window_width", 1400)
@@ -120,7 +120,7 @@ class App(tk.Tk):
                 try:
                     import ctypes
                     # Define App User Model ID para Windows 7+
-                    myappid = 'ifwedesnay.qualificador.app.2.0'
+                    myappid = 'ifwednesday.qualificador.app.2.1'
                     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
                     logger.info("App User Model ID configurado para barra de tarefas")
                 except Exception as e:
@@ -142,6 +142,9 @@ class App(tk.Tk):
             self.template_text_cert = load_template_text(
                 templates_dir / "modelo_3_certidao.json"
             )
+            self.template_text_cert_cnh = load_template_text(
+                templates_dir / "modelo_3_certidao_cnh.json"
+            )
             self.template_text_casados = load_template_text(
                 templates_dir / "modelo_4_casados.json"
             )
@@ -150,6 +153,9 @@ class App(tk.Tk):
             )
             self.template_text_empresa = load_template_text(
                 templates_dir / "modelo_6_empresa.json"
+            )
+            self.template_text_empresa_sem_cnh = load_template_text(
+                templates_dir / "modelo_6_empresa_sem_cnh.json"
             )
             self.template_text_imovel = load_template_text(
                 templates_dir / "modelo_7_imovel.json"
@@ -246,6 +252,9 @@ class App(tk.Tk):
         self.vars["cep_casados"] = tk.StringVar(value="78690-000")
         self.cnh_enabled1 = tk.BooleanVar(value=False)
         self.cnh_enabled2 = tk.BooleanVar(value=False)
+        self.cnh_enabled_certidao = tk.BooleanVar(value=False)
+        self.cnh_enabled_empresa = tk.BooleanVar(value=True)  # Default True porque template atual usa CNH
+        self.casados_modelo_alternativo = tk.BooleanVar(value=False)
 
         # Variáveis da empresa
         self.vars["razao_social"] = tk.StringVar(value="")
@@ -314,7 +323,7 @@ class App(tk.Tk):
     def _build_modelo_tab(self, notebook: ctk.CTkTabview) -> None:
         tab = notebook.add("MODELO")
 
-        switch_frame = ctk.CTkFrame(tab, corner_radius=12, fg_color="#2d2d2d")
+        switch_frame = ctk.CTkFrame(tab, corner_radius=16, fg_color="#2d2d2d")
         switch_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
         ctk.CTkSwitch(
             master=switch_frame,
@@ -326,14 +335,14 @@ class App(tk.Tk):
             progress_color="#1f6aa5",
             button_color="#1f6aa5",
             button_hover_color="#1a5a8a",
-            corner_radius=8,
+            corner_radius=16,
         ).pack(anchor="w", padx=15, pady=10)
 
-        main = ctk.CTkFrame(tab, corner_radius=12, fg_color="#2d2d2d")
+        main = ctk.CTkFrame(tab, corner_radius=16, fg_color="#2d2d2d")
         main.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        left_container = ctk.CTkFrame(main, corner_radius=8, fg_color="#3a3a3a")
-        right = ctk.CTkFrame(main, corner_radius=8, fg_color="#3a3a3a")
+        left_container = ctk.CTkFrame(main, corner_radius=16, fg_color="#3a3a3a")
+        right = ctk.CTkFrame(main, corner_radius=16, fg_color="#3a3a3a")
         left_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
 
