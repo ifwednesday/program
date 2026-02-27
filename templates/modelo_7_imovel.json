@@ -1,0 +1,4 @@
+{
+  "name": "modelo_7_imovel",
+  "template": "{{quantidade_imovel}} {{tipo_imovel}} situado na {{zona_imovel}} desta cidade e Comarca de {{cidade_imovel}}, Estado de {{estado_imovel}}, no loteamento denominado \"{{loteamento}}\", com a área de {{area_valor}} {{area_unidade}} ({{area_por_extenso}}), Lote sob o nº {{lote}} ({{lote_por_extenso}}), da Quadra nº {{quadra}} ({{quadra_por_extenso}})"
+}

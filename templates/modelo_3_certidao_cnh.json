@@ -1,0 +1,5 @@
+{
+  "name": "modelo_3_certidao_cnh",
+  "template": "{{tratamento}} {{nome}}, {{nacionalidade}}, natural de {{naturalidade}}, nascid{{genero_terminacao}} aos {{data_nascimento}}, filh{{genero_terminacao}} de {{nome_pai}} e da D.ª {{nome_mae}}, portador{{sufixo_a}} da CNH-{{cnh_uf}} n.º {{cnh_numero}}, expedida em {{cnh_data_expedicao}}, onde consta {{referencia_documento_identidade}}, inscrit{{genero_terminacao}} no CPF/MF sob o n.º {{cpf}}, {{profissao}}, que declarou ser {{estado_civil}} e não conviver em regime que configure união estável, de acordo com a Lei 6.515/77, (certidão de nascimento, lavrada sob a matrícula n.º {{cert_matricula}}, nestas Notas, em {{cert_data}}), residente e domiciliad{{genero_terminacao}} a {{logradouro}}, n.º {{numero}}, Bairro {{bairro}}, na cidade de {{cidade}} – CEP: {{cep}} – com endereço eletrônico: {{email}};"
+}
+
