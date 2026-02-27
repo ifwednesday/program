@@ -2,6 +2,7 @@
 
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -18,22 +19,26 @@ def clean_build_dirs() -> None:
 def build_executable() -> None:
     """Executa PyInstaller para criar o executável"""
     print("Iniciando build do executável...")
-    
+
     # Usar python -m pyinstaller para garantir que o módulo correto seja usado
-    import sys
-    
+
     try:
         subprocess.run(
             [sys.executable, "-m", "PyInstaller", "Qualificador.spec", "--clean"],
             check=True,
         )
-        print("\n✅ Build concluído com sucesso!")
-        print(f"📦 Executável disponível em: {Path('dist/Qualificador.exe').absolute()}")
+        artifact = (
+            Path("dist/Qualificador.exe")
+            if sys.platform.startswith("win")
+            else Path("dist/Qualificador")
+        )
+        print("\nBuild concluido com sucesso!")
+        print(f"Executavel disponivel em: {artifact.absolute()}")
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ Erro durante o build: {e}")
+        print(f"\nErro durante o build: {e}")
         raise
     except Exception as e:
-        print(f"\n❌ Erro ao executar PyInstaller: {e}")
+        print(f"\nErro ao executar PyInstaller: {e}")
         print("\nVerifique se o PyInstaller está instalado:")
         print("  pip install pyinstaller")
         raise
