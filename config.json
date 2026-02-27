@@ -1,0 +1,70 @@
+{
+  "defaults": {
+    "tratamento": "Sr.",
+    "nacionalidade": "brasileiro",
+    "estado_civil": "solteiro",
+    "orgao_rg": "SSP",
+    "uf_rg": "MT",
+    "cnh_uf": "MT",
+    "profissao": "do lar",
+    "logradouro": "Rua Campo Novo",
+    "numero": "56",
+    "bairro": "Sant'Ana",
+    "cidade": "Nova Xavantina-MT",
+    "cep": "78690-000",
+    "email": "não declarado",
+    "genero_terminacao": "o"
+  },
+  "defaults_casados": {
+    "tratamento1": "Sr.",
+    "genero_terminacao1": "o",
+    "orgao_rg1": "SSP",
+    "uf_rg1": "MT",
+    "cnh_uf1": "MT",
+    "profissao1": "do lar",
+    "email1": "não declarado",
+    "tratamento2": "Sra.",
+    "genero_terminacao2": "a",
+    "orgao_rg2": "SSP",
+    "uf_rg2": "MT",
+    "cnh_uf2": "MT",
+    "profissao2": "do lar",
+    "email2": "não declarado",
+    "logradouro_casados": "Rua Campo Novo",
+    "numero_casados": "56",
+    "bairro_casados": "Sant'Ana",
+    "cidade_casados": "Nova Xavantina-MT",
+    "cep_casados": "78690-000"
+  },
+  "defaults_empresa": {
+    "logradouro_empresa": "Rua Campo Novo",
+    "numero_empresa": "56",
+    "bairro_empresa": "Sant'Ana",
+    "cidade_empresa": "Nova Xavantina-MT",
+    "cep_empresa": "78690-000",
+    "email_empresa": "não declarado",
+    "email_pessoal": "não declarado"
+  },
+  "defaults_imovel": {
+    "cidade_imovel": "Nova Xavantina"
+  },
+  "ui": {
+    "theme": "dark",
+    "font_size": 11,
+    "window_width": 1400,
+    "window_height": 900
+  },
+  "logging": {
+    "enabled": true,
+    "level": "INFO",
+    "max_file_size_mb": 10,
+    "backup_count": 3
+  },
+  "historico": {
+    "enabled": true,
+    "max_items": 10,
+    "store_full_data": false,
+    "mask_cpf": true
+  }
+}
+

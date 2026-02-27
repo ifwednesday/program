@@ -1,0 +1,72 @@
+# Workflow para build e release do executável Qualificador
+name: Build and Release
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  release:
+    types: [published]
+  workflow_dispatch:  # Permite executar manualmente para testes
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: 'pip'
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build do executável
+        run: python build.py
+
+      - name: Verificar se o executável foi criado
+        run: |
+          if (Test-Path "dist\Qualificador.exe") {
+            Write-Host "✅ Executável criado com sucesso!"
+            $size = (Get-Item "dist\Qualificador.exe").Length / 1MB
+            Write-Host "📦 Tamanho: $([math]::Round($size, 2)) MB"
+          } else {
+            Write-Error "❌ Executável não encontrado!"
+            exit 1
+          }
+
+      - name: Upload do executável para release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'release'
+        with:
+          files: |
+            dist/Qualificador.exe
+            config.json
+            LICENSE
+            COMMERCIAL_LICENSE.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload do executável como artefato (para testes manuais)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualificador-build
+          path: |
+            dist/Qualificador.exe
+            config.json
+            LICENSE
+            COMMERCIAL_LICENSE.md
+          retention-days: 7
+

@@ -1,0 +1,31 @@
+"""Tema visual compartilhado para o app (paleta e tipografia)."""
+
+FONT_FAMILY = "Segoe UI"
+
+APP_BG = "#0c1018"
+SHELL_BG = "#0f1420"
+SIDEBAR_BG = "#151c2b"
+CONTENT_BG = "#121927"
+SURFACE_CARD = "#1a2334"
+SURFACE_SUBTLE = "#1f2a3d"
+SURFACE_INPUT = "#0f1726"
+
+BORDER = "#2d3b55"
+BORDER_STRONG = "#395179"
+
+TEXT_PRIMARY = "#f5f8ff"
+TEXT_MUTED = "#a8b6cf"
+TEXT_SOFT = "#8d9ab1"
+
+ACCENT = "#4f8cff"
+ACCENT_HOVER = "#3f7ae8"
+ACCENT_SOFT = "#8db6ff"
+
+SUCCESS = "#2ea36e"
+SUCCESS_HOVER = "#24875a"
+NEUTRAL = "#2a3750"
+NEUTRAL_HOVER = "#334262"
+WARNING = "#d29a39"
+WARNING_HOVER = "#bf8727"
+DANGER = "#d45c5c"
+DANGER_HOVER = "#bc4f4f"
