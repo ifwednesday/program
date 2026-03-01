@@ -79,7 +79,7 @@ except ImportError:
     )
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2.2.0"
+APP_VERSION = "2.2.1"
 PROJECT_GITHUB_URL = "https://github.com/ifwednesday/program"
 SIDEBAR_ITEMS = (
     ("MODELO SIMPLES", "Modelo Simples", "MS"),
