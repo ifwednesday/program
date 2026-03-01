@@ -56,3 +56,4 @@ htmlcov/
 .flake8
 .mypy_cache/
 
+history.json
