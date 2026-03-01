@@ -20,6 +20,7 @@ try:
     from .styles import setup_styles
     from .tabs.tab_casados import build_tab_casados
     from .tabs.tab_certidao import build_tab_certidao
+    from .tabs.tab_extracao import build_tab_extracao
     from .template_engine import load_template as load_template_cached
     from .ui_builders.cnh import CNHSection
     from .ui_builders.forms import FormBuilder
@@ -52,6 +53,7 @@ except ImportError:
     from styles import setup_styles  # type: ignore
     from tabs.tab_casados import build_tab_casados  # type: ignore
     from tabs.tab_certidao import build_tab_certidao  # type: ignore
+    from tabs.tab_extracao import build_tab_extracao  # type: ignore
     from template_engine import load_template as load_template_cached  # type: ignore
     from ui_builders.cnh import CNHSection  # type: ignore
     from ui_builders.forms import FormBuilder  # type: ignore
@@ -77,7 +79,7 @@ except ImportError:
     )
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
 PROJECT_GITHUB_URL = "https://github.com/ifwednesday/program"
 SIDEBAR_ITEMS = (
     ("MODELO SIMPLES", "Modelo Simples", "MS"),
@@ -85,6 +87,7 @@ SIDEBAR_ITEMS = (
     ("CASADOS", "Casados", "CS"),
     ("EMPRESA", "Empresa", "EP"),
     ("IMÓVEIS", "Imóveis", "IM"),
+    ("EXTRAÇÃO", "Extração", "EX"),
     ("SOBRE", "Sobre", "SB"),
 )
 
@@ -265,7 +268,9 @@ class App(tk.Tk):
 
         self.vars["tratamento"] = tk.StringVar(value=cfg("tratamento", "Sr."))
         self.vars["nome"] = tk.StringVar()
-        self.vars["nacionalidade"] = tk.StringVar(value=cfg("nacionalidade", "brasileiro"))
+        self.vars["nacionalidade"] = tk.StringVar(
+            value=cfg("nacionalidade", "brasileiro")
+        )
         self.vars["estado_civil"] = tk.StringVar(value=cfg("estado_civil", "solteiro"))
         self.vars["naturalidade"] = tk.StringVar()
         self.vars["data_nascimento"] = tk.StringVar()
@@ -277,13 +282,17 @@ class App(tk.Tk):
         self.vars["cpf"] = tk.StringVar()
         self.vars["cpf_igual_rg"] = tk.BooleanVar(value=False)
         self.vars["profissao"] = tk.StringVar(value=cfg("profissao", "do lar"))
-        self.vars["logradouro"] = tk.StringVar(value=cfg("logradouro", "Rua Campo Novo"))
+        self.vars["logradouro"] = tk.StringVar(
+            value=cfg("logradouro", "Rua Campo Novo")
+        )
         self.vars["numero"] = tk.StringVar(value=cfg("numero", "56"))
         self.vars["bairro"] = tk.StringVar(value=cfg("bairro", "Sant'Ana"))
         self.vars["cidade"] = tk.StringVar(value=cfg("cidade", "Nova Xavantina-MT"))
         self.vars["cep"] = tk.StringVar(value=cfg("cep", "78690-000"))
         self.vars["email"] = tk.StringVar(value=cfg("email", "não declarado"))
-        self.vars["genero_terminacao"] = tk.StringVar(value=cfg("genero_terminacao", "o"))
+        self.vars["genero_terminacao"] = tk.StringVar(
+            value=cfg("genero_terminacao", "o")
+        )
         self.vars["cnh_uf"] = tk.StringVar(value=cfg("cnh_uf", "MT"))
         self.vars["cnh_numero"] = tk.StringVar(value="")
         self.vars["cnh_data_expedicao"] = tk.StringVar(value="")
@@ -291,7 +300,9 @@ class App(tk.Tk):
         self.vars["cert_data"] = tk.StringVar(value="")
         self.vars["tratamento1"] = tk.StringVar(value=cfg("tratamento1", "Sr."))
         self.vars["nome1"] = tk.StringVar(value="")
-        self.vars["genero_terminacao1"] = tk.StringVar(value=cfg("genero_terminacao1", "o"))
+        self.vars["genero_terminacao1"] = tk.StringVar(
+            value=cfg("genero_terminacao1", "o")
+        )
         self.vars["naturalidade1"] = tk.StringVar(value="")
         self.vars["data_nascimento1"] = tk.StringVar(value="")
         self.vars["nome_pai1"] = tk.StringVar(value="")
@@ -308,7 +319,9 @@ class App(tk.Tk):
         self.vars["email1"] = tk.StringVar(value=cfg("email1", "não declarado"))
         self.vars["tratamento2"] = tk.StringVar(value=cfg("tratamento2", "Sra."))
         self.vars["nome2"] = tk.StringVar(value="")
-        self.vars["genero_terminacao2"] = tk.StringVar(value=cfg("genero_terminacao2", "a"))
+        self.vars["genero_terminacao2"] = tk.StringVar(
+            value=cfg("genero_terminacao2", "a")
+        )
         self.vars["naturalidade2"] = tk.StringVar(value="")
         self.vars["data_nascimento2"] = tk.StringVar(value="")
         self.vars["nome_pai2"] = tk.StringVar(value="")
@@ -330,7 +343,9 @@ class App(tk.Tk):
             value=cfg("logradouro_casados", "Rua Campo Novo")
         )
         self.vars["numero_casados"] = tk.StringVar(value=cfg("numero_casados", "56"))
-        self.vars["bairro_casados"] = tk.StringVar(value=cfg("bairro_casados", "Sant'Ana"))
+        self.vars["bairro_casados"] = tk.StringVar(
+            value=cfg("bairro_casados", "Sant'Ana")
+        )
         self.vars["cidade_casados"] = tk.StringVar(
             value=cfg("cidade_casados", "Nova Xavantina-MT")
         )
@@ -355,12 +370,16 @@ class App(tk.Tk):
             value=cfg("logradouro_empresa", "Rua Campo Novo")
         )
         self.vars["numero_empresa"] = tk.StringVar(value=cfg("numero_empresa", "56"))
-        self.vars["bairro_empresa"] = tk.StringVar(value=cfg("bairro_empresa", "Sant'Ana"))
+        self.vars["bairro_empresa"] = tk.StringVar(
+            value=cfg("bairro_empresa", "Sant'Ana")
+        )
         self.vars["cidade_empresa"] = tk.StringVar(
             value=cfg("cidade_empresa", "Nova Xavantina-MT")
         )
         self.vars["cep_empresa"] = tk.StringVar(value=cfg("cep_empresa", "78690-000"))
-        self.vars["email_empresa"] = tk.StringVar(value=cfg("email_empresa", "não declarado"))
+        self.vars["email_empresa"] = tk.StringVar(
+            value=cfg("email_empresa", "não declarado")
+        )
         self.vars["numero_alteracao"] = tk.StringVar(value="2ª")
         self.vars["numero_registro"] = tk.StringVar(value="")
         self.vars["data_registro"] = tk.StringVar(value="")
@@ -373,13 +392,17 @@ class App(tk.Tk):
         self.vars["nacionalidade_empresa"] = tk.StringVar(value="brasileira")
         self.vars["estado_civil_empresa"] = tk.StringVar(value="casada")
         self.vars["endereco_pessoal"] = tk.StringVar(value="")
-        self.vars["email_pessoal"] = tk.StringVar(value=cfg("email_pessoal", "não declarado"))
+        self.vars["email_pessoal"] = tk.StringVar(
+            value=cfg("email_pessoal", "não declarado")
+        )
 
         # Variáveis do imóvel
         self.vars["quantidade_imovel"] = tk.StringVar(value="Um (01)")
         self.vars["tipo_imovel"] = tk.StringVar(value="lote de terras")
         self.vars["zona_imovel"] = tk.StringVar(value="zona urbana")
-        self.vars["cidade_imovel"] = tk.StringVar(value=cfg("cidade_imovel", "Nova Xavantina"))
+        self.vars["cidade_imovel"] = tk.StringVar(
+            value=cfg("cidade_imovel", "Nova Xavantina")
+        )
         self.vars["estado_imovel"] = tk.StringVar(value="Mato Grosso")
         self.vars["loteamento"] = tk.StringVar(value="")
         self.vars["area_valor"] = tk.StringVar(value="")
@@ -516,6 +539,7 @@ class App(tk.Tk):
         self._build_casados_tab(self.notebook)
         self._build_empresa_tab(self.notebook)
         self._build_imovel_tab(self.notebook)
+        self._build_extracao_tab(self.notebook)
         self._build_about_tab(self.notebook)
         self._build_sidebar_menu()
         self._hide_notebook_header()
@@ -526,7 +550,11 @@ class App(tk.Tk):
         tab = notebook.add("MODELO SIMPLES")
 
         switch_frame = ctk.CTkFrame(
-            tab, corner_radius=16, fg_color=SURFACE_CARD, border_width=1, border_color=BORDER
+            tab,
+            corner_radius=16,
+            fg_color=SURFACE_CARD,
+            border_width=1,
+            border_color=BORDER,
         )
         switch_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
         ctk.CTkSwitch(
@@ -546,15 +574,25 @@ class App(tk.Tk):
         main.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
         left_container = ctk.CTkFrame(
-            main, corner_radius=16, fg_color=SURFACE_SUBTLE, border_width=1, border_color=BORDER
+            main,
+            corner_radius=16,
+            fg_color=SURFACE_SUBTLE,
+            border_width=1,
+            border_color=BORDER,
         )
         right = ctk.CTkFrame(
-            main, corner_radius=16, fg_color=SURFACE_SUBTLE, border_width=1, border_color=BORDER
+            main,
+            corner_radius=16,
+            fg_color=SURFACE_SUBTLE,
+            border_width=1,
+            border_color=BORDER,
         )
         left_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
 
-        left_scroll = ctk.CTkScrollableFrame(left_container, corner_radius=0, fg_color=SURFACE_SUBTLE)
+        left_scroll = ctk.CTkScrollableFrame(
+            left_container, corner_radius=0, fg_color=SURFACE_SUBTLE
+        )
         left_scroll.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         last_row = self.form_builder.build_common_fields(left_scroll)
@@ -599,6 +637,10 @@ class App(tk.Tk):
             from tabs.tab_imovel import build_tab_imovel  # type: ignore
 
             build_tab_imovel(notebook, tab_imovel, self)
+
+    def _build_extracao_tab(self, notebook: ctk.CTkTabview) -> None:
+        tab_extracao = notebook.add("EXTRAÇÃO")
+        build_tab_extracao(notebook, tab_extracao, self)
 
     def _build_about_tab(self, notebook: ctk.CTkTabview) -> None:
         tab_about = notebook.add("SOBRE")
@@ -799,7 +841,11 @@ class App(tk.Tk):
     def _refresh_sidebar_layout(self) -> None:
         collapsed = self.sidebar_collapsed
         self.sidebar.configure(
-            width=self.sidebar_width_collapsed if collapsed else self.sidebar_width_expanded
+            width=(
+                self.sidebar_width_collapsed
+                if collapsed
+                else self.sidebar_width_expanded
+            )
         )
 
         self.sidebar_title.configure(text="QLF" if collapsed else "QUALIFICADOR")

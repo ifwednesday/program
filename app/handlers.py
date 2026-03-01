@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from .config import get_config
+    from .extraction import create_document_extractor
     from .history import get_history_manager
     from .template_engine import clear_template_cache, render_template
     from .validators import (
@@ -24,6 +25,7 @@ try:
     )
 except ImportError:
     from config import get_config  # type: ignore
+    from extraction import create_document_extractor  # type: ignore
     from history import get_history_manager  # type: ignore
     from template_engine import clear_template_cache, render_template  # type: ignore
     from validators import (  # type: ignore
@@ -315,7 +317,7 @@ class EventHandlers:
     def on_generate_modelo(self) -> None:
         try:
             data = self.values_from_inputs()
-            
+
             # Validar CPF se fornecido
             cpf = data.get("cpf", "")
             if cpf and len(only_digits(cpf)) == 11:
@@ -325,13 +327,15 @@ class EventHandlers:
                         "Atenção",
                         "O CPF digitado é inválido. Verifique os dígitos.",
                     )
-            
+
             if self.app.cnh_enabled.get():
                 data.setdefault("cnh_uf", "MT")
                 data.setdefault("cnh_numero", "")
                 data.setdefault("cnh_data_expedicao", "")
                 try:
-                    output = render_template(self.app.template_text_cnh, data, strict=False)
+                    output = render_template(
+                        self.app.template_text_cnh, data, strict=False
+                    )
                     template_used = "modelo_cnh"
                 except KeyError as e:
                     logger.error(f"Campo obrigatório faltando no template CNH: {e}")
@@ -369,15 +373,17 @@ class EventHandlers:
             self.app.btn_copy.configure(state=tk.NORMAL)
             self.app.btn_save.configure(state=tk.NORMAL)
             self.app.status.configure(text="Texto gerado")
-            
+
             # Adicionar ao histórico
             if self.config.get("historico.enabled", True):
                 try:
                     self.history.add(template_used, data)
-                    logger.info(f"Documento adicionado ao histórico: {data.get('nome', 'N/A')}")
+                    logger.info(
+                        f"Documento adicionado ao histórico: {data.get('nome', 'N/A')}"
+                    )
                 except Exception as e:
                     logger.error(f"Erro ao salvar no histórico: {e}")
-                    
+
         except Exception as e:
             logger.exception("Erro crítico ao gerar modelo")
             messagebox.showerror("Erro", f"Erro crítico: {e}")
@@ -433,18 +439,22 @@ class EventHandlers:
         data = self.values_from_inputs()
         data.setdefault("cert_matricula", "")
         data.setdefault("cert_data", "")
-        
+
         # Verificar se CNH está ativado
         cnh_enabled = self.app.cnh_enabled_certidao.get()
-        
+
         try:
             if cnh_enabled:
                 data.setdefault("cnh_uf", "MT")
                 data.setdefault("cnh_numero", "")
                 data.setdefault("cnh_data_expedicao", "")
-                output = render_template(self.app.template_text_cert_cnh, data, strict=False)
+                output = render_template(
+                    self.app.template_text_cert_cnh, data, strict=False
+                )
             else:
-                output = render_template(self.app.template_text_cert, data, strict=False)
+                output = render_template(
+                    self.app.template_text_cert, data, strict=False
+                )
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("Erro", f"Erro ao gerar texto (Certidão): {exc}")
             return
@@ -535,14 +545,16 @@ class EventHandlers:
         self, data: Dict[str, str], cnh1_enabled: bool, cnh2_enabled: bool
     ) -> str:
         """Gera texto para casados baseado nos switches CNH"""
-        
+
         # Verificar se deve usar o modelo alternativo
         use_alternativo = getattr(
             self.app, "casados_modelo_alternativo", tk.BooleanVar(value=False)
         ).get()
-        
+
         if use_alternativo:
-            return self._generate_casados_text_alternativo(data, cnh1_enabled, cnh2_enabled)
+            return self._generate_casados_text_alternativo(
+                data, cnh1_enabled, cnh2_enabled
+            )
 
         # Gerar texto da pessoa 1
         pessoa1_text = self._generate_pessoa_text(data, 1, cnh1_enabled)
@@ -569,12 +581,12 @@ class EventHandlers:
             f"expedidas nestas Notas), residentes e domiciliados à {logradouro}, "
             f"n.º {numero}, {bairro}, na cidade de {cidade} – CEP: {cep}"
         )
-    
+
     def _generate_casados_text_alternativo(
         self, data: Dict[str, str], cnh1_enabled: bool, cnh2_enabled: bool
     ) -> str:
         """Gera texto para casados no formato alternativo"""
-        
+
         # Obter dados da pessoa 1
         tratamento1 = data.get("tratamento1", "Sr.")
         nome1 = data.get("nome1", "")
@@ -590,7 +602,7 @@ class EventHandlers:
         email1 = data.get("email1", "")
         identidade1 = self._identity_text(data, "1")
         identidade_ref1 = self._identity_reference_text(data, "1")
-        
+
         # Obter dados da pessoa 2
         tratamento2 = data.get("tratamento2", "Sra.")
         nome2 = data.get("nome2", "")
@@ -606,7 +618,7 @@ class EventHandlers:
         email2 = data.get("email2", "")
         identidade2 = self._identity_text(data, "2")
         identidade_ref2 = self._identity_reference_text(data, "2")
-        
+
         # Dados do casamento
         regime_casamento = data.get("regime_casamento", "")
         cert_matricula = data.get("cert_casamento_matricula", "")
@@ -616,7 +628,7 @@ class EventHandlers:
         bairro = data.get("bairro", "")
         cidade = data.get("cidade", "")
         cep = data.get("cep", "")
-        
+
         # Gerar texto da pessoa 1
         if cnh1_enabled:
             cnh_uf1 = data.get("cnh_uf1", "MT")
@@ -640,7 +652,7 @@ class EventHandlers:
                 f"inscrit{genero1} no CPF/MF sob o n.º {cpf1}, {profissao1} "
                 f"– com endereço eletrônico: {email1}"
             )
-        
+
         # Gerar texto da pessoa 2
         if cnh2_enabled:
             cnh_uf2 = data.get("cnh_uf2", "MT")
@@ -664,10 +676,10 @@ class EventHandlers:
                 f"inscrit{genero2} no CPF/MF sob o n.º {cpf2}, {profissao2} "
                 f"– com endereço eletrônico: {email2}"
             )
-        
+
         # Determinar artigo para pessoa 2 baseado no gênero
         artigo_conjuge = "a" if genero2 == "a" else "o"
-        
+
         # Texto final no formato alternativo
         return (
             f"{pessoa1_text}; casado sob o regime da {regime_casamento}, "
@@ -803,9 +815,13 @@ class EventHandlers:
                     data.setdefault("cnh_uf", "MT")
                     data.setdefault("cnh_numero", "")
                     data.setdefault("cnh_data_expedicao", "")
-                    output = render_template(self.app.template_text_empresa, data, strict=False)
+                    output = render_template(
+                        self.app.template_text_empresa, data, strict=False
+                    )
                 else:
-                    output = render_template(self.app.template_text_empresa_sem_cnh, data, strict=False)
+                    output = render_template(
+                        self.app.template_text_empresa_sem_cnh, data, strict=False
+                    )
             except KeyError as e:
                 logger.error(f"Campo obrigatório faltando no template empresa: {e}")
                 messagebox.showerror("Erro", f"Campo obrigatório faltando: {e}")
@@ -826,15 +842,17 @@ class EventHandlers:
             self.app.btn_copy_empresa.configure(state=tk.NORMAL)
             self.app.btn_save_empresa.configure(state=tk.NORMAL)
             self.app.status.configure(text="Texto (Empresa) gerado")
-            
+
             # Adicionar ao histórico
             if self.config.get("historico.enabled", True):
                 try:
                     self.history.add("modelo_empresa", data)
-                    logger.info(f"Empresa adicionada ao histórico: {data.get('razao_social', 'N/A')}")
+                    logger.info(
+                        f"Empresa adicionada ao histórico: {data.get('razao_social', 'N/A')}"
+                    )
                 except Exception as e:
                     logger.error(f"Erro ao salvar empresa no histórico: {e}")
-                    
+
         except Exception as e:
             logger.exception("Erro crítico ao gerar documento de empresa")
             messagebox.showerror("Erro", f"Erro crítico: {e}")
@@ -962,10 +980,16 @@ class EventHandlers:
         data = self.values_from_inputs()
 
         try:
-            if getattr(self.app, "imovel_modelo_alternativo", tk.BooleanVar(value=False)).get():
-                output = render_template(self.app.template_text_imovel_alternativo, data, strict=False)
+            if getattr(
+                self.app, "imovel_modelo_alternativo", tk.BooleanVar(value=False)
+            ).get():
+                output = render_template(
+                    self.app.template_text_imovel_alternativo, data, strict=False
+                )
             else:
-                output = render_template(self.app.template_text_imovel, data, strict=False)
+                output = render_template(
+                    self.app.template_text_imovel, data, strict=False
+                )
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("Erro", f"Erro ao gerar texto (Imóvel): {exc}")
             return
@@ -1051,6 +1075,339 @@ class EventHandlers:
         self.app.btn_save_imovel.configure(state=tk.DISABLED)
         self.app.status.configure(text="Campos limpos")
 
+    def on_extraction_select_files(self) -> None:
+        file_paths = filedialog.askopenfilenames(
+            title="Selecionar documentos",
+            filetypes=(
+                (
+                    "Documentos suportados",
+                    "*.pdf *.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp *.gif *.heic *.heif",
+                ),
+                ("PDF", "*.pdf"),
+                ("Imagens", "*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp *.gif"),
+                ("Todos os arquivos", "*.*"),
+            ),
+        )
+        if not file_paths:
+            return
+
+        self.app.extraction_files = [Path(p) for p in file_paths]
+        names = "\n".join(path.name for path in self.app.extraction_files)
+        self._set_textbox_content("extraction_files_box", names)
+
+        info = f"{len(self.app.extraction_files)} arquivo(s) selecionado(s)"
+        files_info = getattr(self.app, "extraction_files_info", None)
+        if files_info is not None:
+            files_info.configure(text=info)
+        self.app.status.configure(text=info)
+
+    def on_extraction_run(self) -> None:
+        files = getattr(self.app, "extraction_files", [])
+        if not files:
+            messagebox.showinfo("Extração", "Selecione ao menos um PDF ou imagem.")
+            return
+
+        extractor, setup_warnings = create_document_extractor()
+        result = extractor.extract_from_files(files)
+        if setup_warnings:
+            result.warnings = setup_warnings + result.warnings
+        self.app.extraction_data = result.fields
+        self.app.extraction_raw_text = result.raw_text
+
+        if result.fields:
+            preferred_order = [
+                "nome",
+                "sexo",
+                "cpf",
+                "rg",
+                "orgao_rg",
+                "uf_rg",
+                "data_nascimento",
+                "naturalidade",
+                "nome_pai",
+                "nome_mae",
+                "profissao",
+                "logradouro",
+                "numero",
+                "bairro",
+                "cidade",
+                "cep",
+                "email",
+                "razao_social",
+                "cnpj",
+                "nire",
+            ]
+            ordered_keys = [key for key in preferred_order if key in result.fields]
+            ordered_keys.extend(
+                sorted(key for key in result.fields.keys() if key not in ordered_keys)
+            )
+            ordered = [(key, result.fields[key]) for key in ordered_keys]
+            lines = [f"{key}: {value}" for key, value in ordered]
+            fields_text = "\n".join(lines)
+        else:
+            fields_text = (
+                "Nenhum campo estruturado identificado.\n\n"
+                "Você ainda pode aplicar manualmente com base no texto bruto."
+            )
+
+        self._set_textbox_content("extraction_result_box", fields_text)
+        self._set_textbox_content(
+            "extraction_raw_box", result.raw_text or "Sem texto extraído."
+        )
+
+        filtered_warnings = [
+            item
+            for item in result.warnings
+            if "extração via gemini api" not in item.lower()
+            and "resposta gemini normalizada para campos-alvo" not in item.lower()
+        ]
+        if filtered_warnings:
+            warning_text = "\n".join(f"- {item}" for item in filtered_warnings[:8])
+            messagebox.showwarning(
+                "Extração concluída com avisos",
+                f"A extração terminou com alertas:\n\n{warning_text}",
+            )
+
+        provider_label = (
+            "Gemini"
+            if extractor.__class__.__name__ == "GeminiDocumentExtractor"
+            else "Local"
+        )
+        self.app.status.configure(
+            text=(
+                f"Extração concluída ({provider_label}): "
+                f"{len(result.fields)} campo(s) identificado(s)"
+            )
+        )
+
+    def on_extraction_apply(self) -> None:
+        extracted = getattr(self.app, "extraction_data", {})
+        if not isinstance(extracted, dict) or not extracted:
+            messagebox.showinfo(
+                "Aplicar qualificação",
+                "Nenhum dado extraído para aplicar. Execute a extração primeiro.",
+            )
+            return
+
+        target = str(getattr(self.app, "extraction_target").get())
+        treatment = str(getattr(self.app, "extraction_treatment").get())
+        auto_generate = bool(getattr(self.app, "extraction_auto_generate").get())
+
+        mapped_count = self._apply_extracted_mapping(target, extracted)
+        if treatment == "Automático":
+            self._apply_auto_treatment_from_sex(target, str(extracted.get("sexo", "")))
+        self._apply_treatment_selection(target, treatment)
+
+        target_tab = self._target_to_tab(target)
+        if target_tab:
+            self.app._set_active_tab(target_tab)
+
+        if auto_generate:
+            self._generate_for_target(target)
+
+        self.app.status.configure(
+            text=f"Extração aplicada em {target}: {mapped_count} campo(s)"
+        )
+
+    def _apply_auto_treatment_from_sex(self, target: str, sex_value: str) -> None:
+        normalized = (sex_value or "").strip().lower()
+        if normalized not in {"masculino", "feminino", "m", "f"}:
+            return
+
+        treatment_value = "Sra." if normalized in {"feminino", "f"} else "Sr."
+        if target == "CASADOS - Pessoa 1":
+            key = "tratamento1"
+        elif target == "CASADOS - Pessoa 2":
+            key = "tratamento2"
+        elif target in {"MODELO SIMPLES", "CERTIDÃO", "EMPRESA - Representante"}:
+            key = "tratamento"
+        else:
+            return
+
+        treatment_var = self.app.vars.get(key)
+        if isinstance(treatment_var, tk.StringVar):
+            treatment_var.set(treatment_value)
+
+    def _apply_extracted_mapping(self, target: str, extracted: Dict[str, str]) -> int:
+        base_person_map = {
+            "nome": "nome",
+            "naturalidade": "naturalidade",
+            "data_nascimento": "data_nascimento",
+            "nome_pai": "nome_pai",
+            "nome_mae": "nome_mae",
+            "rg": "rg",
+            "orgao_rg": "orgao_rg",
+            "uf_rg": "uf_rg",
+            "cpf": "cpf",
+            "profissao": "profissao",
+            "logradouro": "logradouro",
+            "numero": "numero",
+            "bairro": "bairro",
+            "cidade": "cidade",
+            "cep": "cep",
+            "email": "email",
+        }
+        casados_p1_map = {
+            "nome": "nome1",
+            "naturalidade": "naturalidade1",
+            "data_nascimento": "data_nascimento1",
+            "nome_pai": "nome_pai1",
+            "nome_mae": "nome_mae1",
+            "rg": "rg1",
+            "orgao_rg": "orgao_rg1",
+            "uf_rg": "uf_rg1",
+            "cpf": "cpf1",
+            "profissao": "profissao1",
+            "email": "email1",
+        }
+        casados_p2_map = {
+            "nome": "nome2",
+            "naturalidade": "naturalidade2",
+            "data_nascimento": "data_nascimento2",
+            "nome_pai": "nome_pai2",
+            "nome_mae": "nome_mae2",
+            "rg": "rg2",
+            "orgao_rg": "orgao_rg2",
+            "uf_rg": "uf_rg2",
+            "cpf": "cpf2",
+            "profissao": "profissao2",
+            "email": "email2",
+        }
+        empresa_representante_map = {
+            "nome": "nome_representante",
+            "naturalidade": "naturalidade",
+            "data_nascimento": "data_nascimento",
+            "nome_pai": "nome_pai",
+            "nome_mae": "nome_mae",
+            "rg": "rg",
+            "orgao_rg": "orgao_rg",
+            "uf_rg": "uf_rg",
+            "cpf": "cpf",
+            "profissao": "profissao",
+            "email": "email_pessoal",
+            "logradouro": "endereco_pessoal",
+        }
+        empresa_dados_map = {
+            "razao_social": "razao_social",
+            "cnpj": "cnpj",
+            "nire": "nire",
+            "logradouro": "logradouro",
+            "numero": "numero",
+            "bairro": "bairro",
+            "cidade": "cidade",
+            "cep": "cep",
+            "email": "email_empresa",
+        }
+        imovel_map = {
+            "cidade": "cidade_imovel",
+            "loteamento": "loteamento",
+        }
+
+        target_maps = {
+            "MODELO SIMPLES": base_person_map,
+            "CERTIDÃO": base_person_map,
+            "CASADOS - Pessoa 1": casados_p1_map,
+            "CASADOS - Pessoa 2": casados_p2_map,
+            "EMPRESA - Representante": empresa_representante_map,
+            "EMPRESA - Dados da Empresa": empresa_dados_map,
+            "IMÓVEIS": imovel_map,
+        }
+
+        selected_map = target_maps.get(target, {})
+        applied = 0
+        for source_key, target_key in selected_map.items():
+            value = str(extracted.get(source_key, "")).strip()
+            if not value:
+                continue
+
+            var = self.app.vars.get(target_key)
+            if not isinstance(var, tk.StringVar):
+                continue
+
+            if "cpf" in target_key:
+                value = format_cpf(value)
+            elif "cnpj" in target_key:
+                value = format_cnpj(value)
+            elif "cep" in target_key:
+                value = format_cep(value)
+            elif "data" in target_key:
+                value = format_date(value)
+
+            var.set(value)
+            applied += 1
+
+        # Complemento para endereço pessoal do representante
+        if target == "EMPRESA - Representante":
+            endereco_parts = [
+                extracted.get("logradouro", "").strip(),
+                extracted.get("numero", "").strip(),
+                extracted.get("bairro", "").strip(),
+                extracted.get("cidade", "").strip(),
+                extracted.get("cep", "").strip(),
+            ]
+            endereco = ", ".join(part for part in endereco_parts if part)
+            if endereco and isinstance(
+                self.app.vars.get("endereco_pessoal"), tk.StringVar
+            ):
+                self.app.vars["endereco_pessoal"].set(endereco)
+                applied += 1
+
+        return applied
+
+    def _apply_treatment_selection(self, target: str, selected_treatment: str) -> None:
+        if selected_treatment == "Automático":
+            return
+
+        if target == "CASADOS - Pessoa 1":
+            key = "tratamento1"
+        elif target == "CASADOS - Pessoa 2":
+            key = "tratamento2"
+        elif target in {"MODELO SIMPLES", "CERTIDÃO", "EMPRESA - Representante"}:
+            key = "tratamento"
+        else:
+            return
+
+        treatment_var = self.app.vars.get(key)
+        if isinstance(treatment_var, tk.StringVar):
+            treatment_var.set(selected_treatment)
+
+    @staticmethod
+    def _target_to_tab(target: str) -> str:
+        target_tabs = {
+            "MODELO SIMPLES": "MODELO SIMPLES",
+            "CERTIDÃO": "CERTIDÃO",
+            "CASADOS - Pessoa 1": "CASADOS",
+            "CASADOS - Pessoa 2": "CASADOS",
+            "EMPRESA - Representante": "EMPRESA",
+            "EMPRESA - Dados da Empresa": "EMPRESA",
+            "IMÓVEIS": "IMÓVEIS",
+        }
+        return target_tabs.get(target, "")
+
+    def _generate_for_target(self, target: str) -> None:
+        if target == "MODELO SIMPLES":
+            self.on_generate_modelo()
+        elif target == "CERTIDÃO":
+            self.on_generate_cert()
+        elif target in {"CASADOS - Pessoa 1", "CASADOS - Pessoa 2"}:
+            self.on_generate_casados()
+        elif target in {"EMPRESA - Representante", "EMPRESA - Dados da Empresa"}:
+            self.on_generate_empresa()
+        elif target == "IMÓVEIS":
+            self.on_generate_imovel()
+
+    def _set_textbox_content(self, attr_name: str, content: str) -> None:
+        widget = getattr(self.app, attr_name, None)
+        if widget is None:
+            return
+        try:
+            widget.configure(state=tk.NORMAL)
+            widget.delete("1.0", tk.END)
+            widget.insert("1.0", content)
+            widget.configure(state=tk.DISABLED)
+        except Exception:  # noqa: BLE001
+            return
+
     def on_clear_cache(self) -> None:
         confirm = messagebox.askyesno(
             "Limpar cache",
@@ -1077,7 +1434,13 @@ class EventHandlers:
             Path.cwd().resolve(),
             Path(self.app.base_dir).resolve(),
         }
-        cache_dirs = {"__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", "logs"}
+        cache_dirs = {
+            "__pycache__",
+            ".mypy_cache",
+            ".pytest_cache",
+            ".ruff_cache",
+            "logs",
+        }
         cache_files = {".coverage", ".DS_Store"}
         cache_suffixes = {".pyc", ".pyo"}
         skip_dirs = {".git", ".venv", "venv", "env", "node_modules"}
@@ -1103,7 +1466,9 @@ class EventHandlers:
                         removed_paths.append(path)
                         dir_names.remove(dir_name)
                     except Exception as exc:  # noqa: BLE001
-                        logger.warning(f"Falha ao remover diretório de cache {path}: {exc}")
+                        logger.warning(
+                            f"Falha ao remover diretório de cache {path}: {exc}"
+                        )
                         errors.append(path.name)
 
                 for file_name in file_names:
@@ -1124,7 +1489,9 @@ class EventHandlers:
                         path.unlink()
                         removed_paths.append(path)
                     except Exception as exc:  # noqa: BLE001
-                        logger.warning(f"Falha ao remover arquivo temporário {path}: {exc}")
+                        logger.warning(
+                            f"Falha ao remover arquivo temporário {path}: {exc}"
+                        )
                         errors.append(path.name)
 
         if errors:
