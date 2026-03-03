@@ -1113,15 +1113,31 @@ class EventHandlers:
             result.warnings = setup_warnings + result.warnings
         self.app.extraction_data = result.fields
         self.app.extraction_raw_text = result.raw_text
+        target = str(getattr(self.app, "extraction_target").get())
+        missing_required = self._missing_extraction_keys_for_target(
+            target, result.fields
+        )
+        if missing_required:
+            result.warnings.append(
+                (
+                    f"Destino {target}: faltam campos para autopreenchimento completo: "
+                    + ", ".join(missing_required)
+                )
+            )
 
         if result.fields:
             preferred_order = [
                 "nome",
                 "sexo",
+                "nacionalidade",
+                "estado_civil",
                 "cpf",
                 "rg",
                 "orgao_rg",
                 "uf_rg",
+                "cnh_numero",
+                "cnh_data_expedicao",
+                "cnh_uf",
                 "data_nascimento",
                 "naturalidade",
                 "nome_pai",
@@ -1136,6 +1152,10 @@ class EventHandlers:
                 "razao_social",
                 "cnpj",
                 "nire",
+                "cert_matricula",
+                "cert_casamento_matricula",
+                "cert_data",
+                "regime_casamento",
             ]
             ordered_keys = [key for key in preferred_order if key in result.fields]
             ordered_keys.extend(
@@ -1149,6 +1169,10 @@ class EventHandlers:
                 "Nenhum campo estruturado identificado.\n\n"
                 "Você ainda pode aplicar manualmente com base no texto bruto."
             )
+
+        if missing_required:
+            missing_block = "\n".join(f"- {key}" for key in missing_required)
+            fields_text = f"{fields_text}\n\nCampos ainda faltantes para {target}:\n{missing_block}"
 
         self._set_textbox_content("extraction_result_box", fields_text)
         self._set_textbox_content(
@@ -1171,7 +1195,11 @@ class EventHandlers:
         provider_label = (
             "Gemini"
             if extractor.__class__.__name__ == "GeminiDocumentExtractor"
-            else "Local"
+            else (
+                "ML Híbrido"
+                if extractor.__class__.__name__ == "MLHybridDocumentExtractor"
+                else "Local"
+            )
         )
         self.app.status.configure(
             text=(
@@ -1228,9 +1256,28 @@ class EventHandlers:
         if isinstance(treatment_var, tk.StringVar):
             treatment_var.set(treatment_value)
 
-    def _apply_extracted_mapping(self, target: str, extracted: Dict[str, str]) -> int:
-        base_person_map = {
+    def _is_cnh_required_for_target(self, target: str) -> bool:
+        def _value(attr_name: str) -> bool:
+            var = getattr(self.app, attr_name, None)
+            return bool(var.get()) if hasattr(var, "get") else False
+
+        if target == "MODELO SIMPLES":
+            return _value("cnh_enabled")
+        if target == "CERTIDÃO":
+            return _value("cnh_enabled_certidao")
+        if target == "CASADOS - Pessoa 1":
+            return _value("cnh_enabled1")
+        if target == "CASADOS - Pessoa 2":
+            return _value("cnh_enabled2")
+        if target == "EMPRESA - Representante":
+            return _value("cnh_enabled_empresa")
+        return False
+
+    def _get_extraction_target_maps(self) -> Dict[str, Dict[str, str]]:
+        simple_person_map = {
             "nome": "nome",
+            "nacionalidade": "nacionalidade",
+            "estado_civil": "estado_civil",
             "naturalidade": "naturalidade",
             "data_nascimento": "data_nascimento",
             "nome_pai": "nome_pai",
@@ -1239,6 +1286,9 @@ class EventHandlers:
             "orgao_rg": "orgao_rg",
             "uf_rg": "uf_rg",
             "cpf": "cpf",
+            "cnh_uf": "cnh_uf",
+            "cnh_numero": "cnh_numero",
+            "cnh_data_expedicao": "cnh_data_expedicao",
             "profissao": "profissao",
             "logradouro": "logradouro",
             "numero": "numero",
@@ -1246,6 +1296,11 @@ class EventHandlers:
             "cidade": "cidade",
             "cep": "cep",
             "email": "email",
+        }
+        certidao_person_map = {
+            **simple_person_map,
+            "cert_matricula": "cert_matricula",
+            "cert_data": "cert_data",
         }
         casados_p1_map = {
             "nome": "nome1",
@@ -1257,8 +1312,18 @@ class EventHandlers:
             "orgao_rg": "orgao_rg1",
             "uf_rg": "uf_rg1",
             "cpf": "cpf1",
+            "cnh_uf": "cnh_uf1",
+            "cnh_numero": "cnh_numero1",
+            "cnh_data_expedicao": "cnh_data_expedicao1",
             "profissao": "profissao1",
             "email": "email1",
+            "logradouro": "logradouro_casados",
+            "numero": "numero_casados",
+            "bairro": "bairro_casados",
+            "cidade": "cidade_casados",
+            "cep": "cep_casados",
+            "regime_casamento": "regime_casamento",
+            "cert_casamento_matricula": "cert_casamento_matricula",
         }
         casados_p2_map = {
             "nome": "nome2",
@@ -1270,11 +1335,23 @@ class EventHandlers:
             "orgao_rg": "orgao_rg2",
             "uf_rg": "uf_rg2",
             "cpf": "cpf2",
+            "cnh_uf": "cnh_uf2",
+            "cnh_numero": "cnh_numero2",
+            "cnh_data_expedicao": "cnh_data_expedicao2",
             "profissao": "profissao2",
             "email": "email2",
+            "logradouro": "logradouro_casados",
+            "numero": "numero_casados",
+            "bairro": "bairro_casados",
+            "cidade": "cidade_casados",
+            "cep": "cep_casados",
+            "regime_casamento": "regime_casamento",
+            "cert_casamento_matricula": "cert_casamento_matricula",
         }
         empresa_representante_map = {
             "nome": "nome_representante",
+            "nacionalidade": "nacionalidade_empresa",
+            "estado_civil": "estado_civil_empresa",
             "naturalidade": "naturalidade",
             "data_nascimento": "data_nascimento",
             "nome_pai": "nome_pai",
@@ -1283,6 +1360,9 @@ class EventHandlers:
             "orgao_rg": "orgao_rg",
             "uf_rg": "uf_rg",
             "cpf": "cpf",
+            "cnh_uf": "cnh_uf",
+            "cnh_numero": "cnh_numero",
+            "cnh_data_expedicao": "cnh_data_expedicao",
             "profissao": "profissao",
             "email": "email_pessoal",
             "logradouro": "endereco_pessoal",
@@ -1291,21 +1371,20 @@ class EventHandlers:
             "razao_social": "razao_social",
             "cnpj": "cnpj",
             "nire": "nire",
-            "logradouro": "logradouro",
-            "numero": "numero",
-            "bairro": "bairro",
-            "cidade": "cidade",
-            "cep": "cep",
+            "logradouro": "logradouro_empresa",
+            "numero": "numero_empresa",
+            "bairro": "bairro_empresa",
+            "cidade": "cidade_empresa",
+            "cep": "cep_empresa",
             "email": "email_empresa",
         }
         imovel_map = {
             "cidade": "cidade_imovel",
             "loteamento": "loteamento",
         }
-
-        target_maps = {
-            "MODELO SIMPLES": base_person_map,
-            "CERTIDÃO": base_person_map,
+        return {
+            "MODELO SIMPLES": simple_person_map,
+            "CERTIDÃO": certidao_person_map,
             "CASADOS - Pessoa 1": casados_p1_map,
             "CASADOS - Pessoa 2": casados_p2_map,
             "EMPRESA - Representante": empresa_representante_map,
@@ -1313,7 +1392,27 @@ class EventHandlers:
             "IMÓVEIS": imovel_map,
         }
 
-        selected_map = target_maps.get(target, {})
+    def _get_extraction_target_map(self, target: str) -> Dict[str, str]:
+        base_map = self._get_extraction_target_maps().get(target, {})
+        selected_map = dict(base_map)
+        if not self._is_cnh_required_for_target(target):
+            for key in ("cnh_uf", "cnh_numero", "cnh_data_expedicao"):
+                selected_map.pop(key, None)
+        return selected_map
+
+    def _missing_extraction_keys_for_target(
+        self, target: str, extracted: Dict[str, str]
+    ) -> List[str]:
+        selected_map = self._get_extraction_target_map(target)
+        missing: List[str] = []
+        for source_key in selected_map.keys():
+            value = str(extracted.get(source_key, "")).strip()
+            if not value:
+                missing.append(source_key)
+        return missing
+
+    def _apply_extracted_mapping(self, target: str, extracted: Dict[str, str]) -> int:
+        selected_map = self._get_extraction_target_map(target)
         applied = 0
         for source_key, target_key in selected_map.items():
             value = str(extracted.get(source_key, "")).strip()

@@ -1,0 +1,5 @@
+# Dependencias opcionais para extracao ML hibrida
+numpy==1.26.4
+opencv-python==4.10.0.84
+scikit-learn==1.5.2
+joblib==1.4.2

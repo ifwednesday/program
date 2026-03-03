@@ -2,6 +2,8 @@
 
 Sistema desktop para geração de qualificações de partes em documentos jurídicos.
 
+Versão atual: `2.2.2`
+
 ## 📋 Descrição
 
 O Qualificador é uma aplicação desktop desenvolvida em Python que facilita a criação de qualificações completas de partes (pessoas físicas, jurídicas, casais, imóveis, etc.) utilizando templates pré-configurados.
@@ -103,6 +105,17 @@ flake8 .
 # Verificar tipos
 mypy .
 ```
+
+### Extração ML (opcional)
+
+Para extração mais robusta de RG/CPF/CNH com imagens inclinadas (frente/verso), use o modo ML:
+
+```bash
+pip install -r requirements-ml.txt
+export EXTRACTION_PROVIDER=ml
+```
+
+Guia completo de dataset/treino: `docs/ml-extracao-documentos.md`.
 
 ## 📁 Estrutura do Projeto
 
