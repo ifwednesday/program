@@ -43,6 +43,9 @@ app/models/*.jsonl
 dataset_docs/
 dataset_docs_aug/
 datasets/
+AGENTS.md
+tests/
+tests/*
 
 # IDEs
 .vscode/
