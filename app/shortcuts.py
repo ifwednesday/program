@@ -88,12 +88,6 @@ class ShortcutManager:
                 "clear": self.app.handlers.on_clear_casados,
                 "copy": self.app.handlers.on_copy_casados,
             },
-            "EMPRESA": {
-                "generate": self.app.handlers.on_generate_empresa,
-                "save": self.app.handlers.on_save_empresa,
-                "clear": self.app.handlers.on_clear_empresa,
-                "copy": self.app.handlers.on_copy_empresa,
-            },
             "IMÓVEIS": {
                 "generate": self.app.handlers.on_generate_imovel,
                 "save": self.app.handlers.on_save_imovel,

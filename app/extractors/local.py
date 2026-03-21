@@ -2,27 +2,31 @@
 
 from __future__ import annotations
 
-import base64
 import io
-import json
-import mimetypes
 import os
 import re
 import shutil
 import unicodedata
-import urllib.error
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Protocol, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Protocol, Sequence, Tuple
 
-try:
-    from pypdf import PdfReader  # type: ignore
-except Exception:  # noqa: BLE001
+
+def _load_pdf_reader_class() -> Any:
     try:
-        from PyPDF2 import PdfReader  # type: ignore
+        from pypdf import PdfReader as pdf_reader_class  # type: ignore
+
+        return pdf_reader_class
     except Exception:  # noqa: BLE001
-        PdfReader = None  # type: ignore[assignment]
+        try:
+            from PyPDF2 import PdfReader as pdf_reader_class  # type: ignore
+
+            return pdf_reader_class
+        except Exception:  # noqa: BLE001
+            return None
+
+
+PdfReaderClass = _load_pdf_reader_class()
 
 try:
     from PIL import Image, ImageEnhance, ImageOps  # type: ignore
@@ -112,13 +116,13 @@ class DocumentExtractor:
         return "", [f"Formato não suportado: {file_path.name}"]
 
     def _extract_pdf_text(self, file_path: Path) -> Tuple[str, List[str]]:
-        if PdfReader is None:
+        if PdfReaderClass is None:
             return "", ["Biblioteca de PDF indisponível (instale 'pypdf' ou 'PyPDF2')."]
 
         warnings: List[str] = []
         chunks: List[str] = []
         try:
-            reader = PdfReader(str(file_path))
+            reader = PdfReaderClass(str(file_path))
             for page in reader.pages:
                 try:
                     content = page.extract_text() or ""
@@ -604,16 +608,6 @@ class DocumentExtractor:
         fields["cnh_numero"] = self._extract_cnh_number(cleaned)
         fields["cnh_data_expedicao"] = self._extract_cnh_issue_date(cleaned)
         fields["cnh_uf"] = self._extract_cnh_uf(cleaned)
-        fields["cnpj"] = self._find_first(
-            cleaned, (r"\b(\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2})\b",)
-        )
-        fields["razao_social"] = self._find_first(
-            cleaned,
-            (r"(?:^|\n)\s*(?:raz[ãa]o\s+social|empresa)\s*[:\-]\s*([^\n]{3,160})",),
-        )
-        fields["nire"] = self._find_first(
-            cleaned, (r"(?:^|\n)\s*nire\s*[:\-]?\s*([^\n]{3,60})",)
-        )
         fields["cert_matricula"] = self._find_first(
             cleaned,
             (
@@ -1263,7 +1257,6 @@ class DocumentExtractor:
                     "ctps",
                     "eleitor",
                     "cnh",
-                    "cnpj",
                 )
             )
             if short_alpha / len(tokens) > 0.55 and not has_strong_keyword:
@@ -1293,8 +1286,6 @@ class DocumentExtractor:
             "titulo eleitor",
             "t.eleitor",
             "ctps",
-            "nire",
-            "cnpj",
             "detran",
             "nacionalidade",
             "estado civil",

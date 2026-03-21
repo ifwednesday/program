@@ -246,14 +246,10 @@ class FormBuilder:
             date_key in key.lower()
             for date_key in [
                 "data_nascimento",
-                "data_registro",
-                "data_certidao",
                 "cnh_data_expedicao",
                 "cert_data",
             ]
         ):
             return "date"
-        elif "cnpj" in key.lower():
-            return "cnpj"
         else:
             return "text"

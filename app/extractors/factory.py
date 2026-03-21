@@ -44,7 +44,6 @@ def create_document_extractor() -> Tuple[ExtractorProtocol, List[str]]:
             warnings.append(f"Extrator ML indisponível ({exc}); usado extrator local.")
         else:
             extractor = MLHybridDocumentExtractor(model_path=model_path)
-            warnings.extend(extractor.get_setup_warnings())
             return extractor, warnings
 
     return DocumentExtractor(), warnings

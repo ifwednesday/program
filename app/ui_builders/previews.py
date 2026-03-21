@@ -93,8 +93,6 @@ class PreviewBuilder:
                     btn_name = "btn_copy"
                 elif "casados" in preview_attr:
                     btn_name = "btn_copy_casados"
-                elif "empresa" in preview_attr:
-                    btn_name = "btn_copy_empresa"
                 elif "imovel" in preview_attr:
                     btn_name = "btn_copy_imovel"
                 else:
@@ -105,8 +103,6 @@ class PreviewBuilder:
                     btn_name = "btn_save"
                 elif "casados" in preview_attr:
                     btn_name = "btn_save_casados"
-                elif "empresa" in preview_attr:
-                    btn_name = "btn_save_empresa"
                 elif "imovel" in preview_attr:
                     btn_name = "btn_save_imovel"
                 else:

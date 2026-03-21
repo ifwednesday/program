@@ -104,7 +104,6 @@ class Config:
         defaults = {}
         defaults.update(self._config.get("defaults", {}))
         defaults.update(self._config.get("defaults_casados", {}))
-        defaults.update(self._config.get("defaults_empresa", {}))
         defaults.update(self._config.get("defaults_imovel", {}))
         return defaults
 

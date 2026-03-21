@@ -40,9 +40,6 @@ class HistoryManager:
         allowlist = [
             "nome",
             "cpf",
-            "cnpj",
-            "razao_social",
-            "nome_representante",
             "tipo_imovel",
             "cidade_imovel",
         ]

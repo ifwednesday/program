@@ -1,80 +1,32 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
+*.pyo
+*.pyd
 .Python
-env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Virtual environments
+.venv/
 venv/
-ENV/
+env/
+
+# Build artifacts
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-Scripts/*
-!Scripts/ml/
-!Scripts/ml/*.py
-env/Scripts/
-venv/Scripts/
-
-# PyInstaller
-*.manifest
-
-# Binaries / releases
-*.exe
-*.dll
-*.pdb
-*.msi
-
-# ML artifacts / datasets (sensíveis)
-app/models/*.joblib
-app/models/*.jsonl
-dataset_docs/
-dataset_docs_aug/
-datasets/
-AGENTS.md
-tests/
-tests/*
-
-# IDEs
-.vscode/
-.idea/
-.vs/
-.vscode/
-.cursor/
-*.swp
-*.swo
-*~
-.DS_Store
+*.spec.bak
+Scripts/*.exe
 
 # Logs
-*.log
 logs/
 
-# Environment variables
-.env
-.env.local
+# IDE and local tooling
+.vs/
+.vscode/
+.codex/
 
-# Testing
-.coverage
-htmlcov/
-.pytest_cache/
-.ruff_cache/
-tests/
-
-# Linters
-.flake8
-.mypy_cache/
-
-history.json
+# OS files
+.DS_Store

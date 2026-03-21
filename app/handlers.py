@@ -16,11 +16,9 @@ try:
     from .template_engine import clear_template_cache, render_template
     from .validators import (
         format_cep,
-        format_cnpj,
         format_cpf,
         format_date,
         only_digits,
-        validar_cnpj,
         validar_cpf,
     )
 except ImportError:
@@ -30,17 +28,15 @@ except ImportError:
     from template_engine import clear_template_cache, render_template  # type: ignore
     from validators import (  # type: ignore
         format_cep,
-        format_cnpj,
         format_cpf,
         format_date,
         only_digits,
-        validar_cnpj,
         validar_cpf,
     )
 
 
 class EventHandlers:
-    _UPPERCASE_NAME_KEYS = {"nome", "nome1", "nome2", "nome_representante"}
+    _UPPERCASE_NAME_KEYS = {"nome", "nome1", "nome2"}
     _TITLE_CASE_KEYS = {
         "nacionalidade",
         "estado_civil",
@@ -51,11 +47,6 @@ class EventHandlers:
         "logradouro",
         "bairro",
         "cidade",
-        "nacionalidade_empresa",
-        "estado_civil_empresa",
-        "razao_social",
-        "cargo_representante",
-        "endereco_pessoal",
         "naturalidade1",
         "nome_pai1",
         "nome_mae1",
@@ -68,9 +59,6 @@ class EventHandlers:
         "logradouro_casados",
         "bairro_casados",
         "cidade_casados",
-        "logradouro_empresa",
-        "bairro_empresa",
-        "cidade_empresa",
         "tipo_imovel",
         "zona_imovel",
         "cidade_imovel",
@@ -164,8 +152,6 @@ class EventHandlers:
             "data_nascimento",
             "data_nascimento1",
             "data_nascimento2",
-            "data_registro",
-            "data_certidao",
             "cnh_data_expedicao",
             "cnh_data_expedicao1",
             "cnh_data_expedicao2",
@@ -173,10 +159,6 @@ class EventHandlers:
         ]:
             if date_field in data:
                 data[date_field] = format_date(data.get(date_field, ""))
-
-        # Formatar CNPJ se existir
-        if "cnpj" in data:
-            data["cnpj"] = format_cnpj(data.get("cnpj", ""))
 
         data["tratamento"] = data.get("tratamento", "") or "Sr."
         data["tratamento1"] = data.get("tratamento1", "") or "Sr."
@@ -296,14 +278,6 @@ class EventHandlers:
             "bairro_casados": "Sant'Ana",
             "cidade_casados": "Nova Xavantina-MT",
             "cep_casados": "78690-000",
-            # Empresa
-            "logradouro_empresa": "Rua Campo Novo",
-            "numero_empresa": "56",
-            "bairro_empresa": "Sant'Ana",
-            "cidade_empresa": "Nova Xavantina-MT",
-            "cep_empresa": "78690-000",
-            "email_empresa": "não declarado",
-            "email_pessoal": "não declarado",
             # Imóvel
             "cidade_imovel": "Nova Xavantina",
         }
@@ -313,6 +287,79 @@ class EventHandlers:
                 var.set(defaults.get(key, ""))
             elif isinstance(var, tk.BooleanVar):
                 var.set(False)
+
+    def _set_preview_output(
+        self,
+        preview_attr: str,
+        copy_btn_attr: str,
+        save_btn_attr: str,
+        output: str,
+        status_text: str,
+    ) -> None:
+        preview = getattr(self.app, preview_attr)
+        preview.configure(state=tk.NORMAL)
+        preview.delete("1.0", tk.END)
+        preview.insert("1.0", output)
+        preview.configure(state=tk.DISABLED)
+        getattr(self.app, copy_btn_attr).configure(state=tk.NORMAL)
+        getattr(self.app, save_btn_attr).configure(state=tk.NORMAL)
+        self.app.status.configure(text=status_text)
+
+    def _get_preview_text(self, preview_attr: str) -> str:
+        preview = getattr(self.app, preview_attr, None)
+        if preview is None:
+            return ""
+        return preview.get("1.0", tk.END).strip()
+
+    def _copy_preview_text(self, preview_attr: str, status_text: str) -> None:
+        text = self._get_preview_text(preview_attr)
+        if not text:
+            return
+        try:
+            self.app.clipboard_clear()
+            self.app.clipboard_append(text)
+            self.app.status.configure(text=status_text)
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("Erro", f"Não foi possível copiar: {exc}")
+
+    def _save_preview_text(
+        self,
+        preview_attr: str,
+        default_name: str,
+        *,
+        show_empty_notice: bool = True,
+    ) -> None:
+        text = self._get_preview_text(preview_attr)
+        if not text:
+            if show_empty_notice:
+                messagebox.showinfo("Salvar", "Nada para salvar")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            title="Salvar como",
+            defaultextension=".txt",
+            initialdir=str(self.app.base_dir),
+            initialfile=default_name,
+            filetypes=(("Texto", "*.txt"), ("Todos os arquivos", "*.*")),
+        )
+        if not file_path:
+            return
+
+        try:
+            Path(file_path).write_text(text, encoding="utf-8")
+            self.app.status.configure(text=f"Arquivo salvo em {file_path}")
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("Erro", f"Erro ao salvar: {exc}")
+
+    def _clear_preview(
+        self, preview_attr: str, copy_btn_attr: str, save_btn_attr: str
+    ) -> None:
+        preview = getattr(self.app, preview_attr)
+        preview.configure(state=tk.NORMAL)
+        preview.delete("1.0", tk.END)
+        preview.configure(state=tk.DISABLED)
+        getattr(self.app, copy_btn_attr).configure(state=tk.DISABLED)
+        getattr(self.app, save_btn_attr).configure(state=tk.DISABLED)
 
     def on_generate_modelo(self) -> None:
         try:
@@ -366,13 +413,9 @@ class EventHandlers:
                     messagebox.showerror("Erro", f"Erro ao gerar texto: {e}")
                     return
 
-            self.app.preview.configure(state=tk.NORMAL)
-            self.app.preview.delete("1.0", tk.END)
-            self.app.preview.insert("1.0", output)
-            self.app.preview.configure(state=tk.DISABLED)
-            self.app.btn_copy.configure(state=tk.NORMAL)
-            self.app.btn_save.configure(state=tk.NORMAL)
-            self.app.status.configure(text="Texto gerado")
+            self._set_preview_output(
+                "preview", "btn_copy", "btn_save", output, "Texto gerado"
+            )
 
             # Adicionar ao histórico
             if self.config.get("historico.enabled", True):
@@ -389,21 +432,9 @@ class EventHandlers:
             messagebox.showerror("Erro", f"Erro crítico: {e}")
 
     def on_copy_modelo(self) -> None:
-        text = self.app.preview.get("1.0", tk.END).strip()
-        if not text:
-            return
-        try:
-            self.app.clipboard_clear()
-            self.app.clipboard_append(text)
-            self.app.status.configure(text="Copiado para a área de transferência")
-        except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Não foi possível copiar: {exc}")
+        self._copy_preview_text("preview", "Copiado para a área de transferência")
 
     def on_save_modelo(self) -> None:
-        text = self.app.preview.get("1.0", tk.END).strip()
-        if not text:
-            messagebox.showinfo("Salvar", "Nada para salvar")
-            return
         nome = (self.app.vars["nome"].get() or "").strip().replace(" ", "_")
         cpf_digits = only_digits(self.app.vars["cpf"].get() or "")
         if self.app.cnh_enabled.get():
@@ -412,27 +443,11 @@ class EventHandlers:
             )
         else:
             default_name = f"qualificacao_{nome or 'pessoa'}_{cpf_digits or 'cpf'}.txt"
-        file_path = filedialog.asksaveasfilename(
-            title="Salvar como",
-            defaultextension=".txt",
-            initialdir=str(self.app.base_dir),
-            initialfile=default_name,
-            filetypes=(("Texto", "*.txt"), ("Todos os arquivos", "*.*")),
-        )
-        if file_path:
-            try:
-                Path(file_path).write_text(text, encoding="utf-8")
-                self.app.status.configure(text=f"Arquivo salvo em {file_path}")
-            except Exception as exc:  # noqa: BLE001
-                messagebox.showerror("Erro", f"Erro ao salvar: {exc}")
+        self._save_preview_text("preview", default_name)
 
     def on_clear_modelo(self) -> None:
         self.reset_all_vars()
-        self.app.preview.configure(state=tk.NORMAL)
-        self.app.preview.delete("1.0", tk.END)
-        self.app.preview.configure(state=tk.DISABLED)
-        self.app.btn_copy.configure(state=tk.DISABLED)
-        self.app.btn_save.configure(state=tk.DISABLED)
+        self._clear_preview("preview", "btn_copy", "btn_save")
         self.app.status.configure(text="Campos limpos")
 
     def on_generate_cert(self) -> None:
@@ -458,58 +473,30 @@ class EventHandlers:
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("Erro", f"Erro ao gerar texto (Certidão): {exc}")
             return
-        self.app.preview3.configure(state=tk.NORMAL)
-        self.app.preview3.delete("1.0", tk.END)
-        self.app.preview3.insert("1.0", output)
-        self.app.preview3.configure(state=tk.DISABLED)
-        self.app.btn_copy3.configure(state=tk.NORMAL)
-        self.app.btn_save3.configure(state=tk.NORMAL)
-        self.app.status.configure(text="Texto (Certidão) gerado")
+        self._set_preview_output(
+            "preview3",
+            "btn_copy3",
+            "btn_save3",
+            output,
+            "Texto (Certidão) gerado",
+        )
 
     def on_copy_cert(self) -> None:
-        text = self.app.preview3.get("1.0", tk.END).strip()
-        if not text:
-            return
-        try:
-            self.app.clipboard_clear()
-            self.app.clipboard_append(text)
-            self.app.status.configure(
-                text="Copiado (Certidão) para a área de transferência"
-            )
-        except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Não foi possível copiar (Certidão): {exc}")
+        self._copy_preview_text(
+            "preview3", "Copiado (Certidão) para a área de transferência"
+        )
 
     def on_save_cert(self) -> None:
-        text = self.app.preview3.get("1.0", tk.END).strip()
-        if not text:
-            messagebox.showinfo("Salvar", "Nada para salvar")
-            return
         nome = (self.app.vars["nome"].get() or "").strip().replace(" ", "_")
         cpf_digits = only_digits(self.app.vars["cpf"].get() or "")
         default_name = (
             f"qualificacao_certidao_{nome or 'pessoa'}_{cpf_digits or 'cpf'}.txt"
         )
-        file_path = filedialog.asksaveasfilename(
-            title="Salvar como",
-            defaultextension=".txt",
-            initialdir=str(self.app.base_dir),
-            initialfile=default_name,
-            filetypes=(("Texto", "*.txt"), ("Todos os arquivos", "*.*")),
-        )
-        if file_path:
-            try:
-                Path(file_path).write_text(text, encoding="utf-8")
-                self.app.status.configure(text=f"Arquivo salvo em {file_path}")
-            except Exception as exc:  # noqa: BLE001
-                messagebox.showerror("Erro", f"Erro ao salvar: {exc}")
+        self._save_preview_text("preview3", default_name)
 
     def on_clear_cert(self) -> None:
         self.reset_all_vars()
-        self.app.preview3.configure(state=tk.NORMAL)
-        self.app.preview3.delete("1.0", tk.END)
-        self.app.preview3.configure(state=tk.DISABLED)
-        self.app.btn_copy3.configure(state=tk.DISABLED)
-        self.app.btn_save3.configure(state=tk.DISABLED)
+        self._clear_preview("preview3", "btn_copy3", "btn_save3")
         self.app.status.configure(text="Campos limpos")
 
     def on_generate_casados(self) -> None:
@@ -533,13 +520,13 @@ class EventHandlers:
             messagebox.showerror("Erro", f"Erro ao gerar texto (Casados): {exc}")
             return
 
-        self.app.preview_casados.configure(state=tk.NORMAL)
-        self.app.preview_casados.delete("1.0", tk.END)
-        self.app.preview_casados.insert("1.0", output)
-        self.app.preview_casados.configure(state=tk.DISABLED)
-        self.app.btn_copy_casados.configure(state=tk.NORMAL)
-        self.app.btn_save_casados.configure(state=tk.NORMAL)
-        self.app.status.configure(text="Texto (Casados) gerado")
+        self._set_preview_output(
+            "preview_casados",
+            "btn_copy_casados",
+            "btn_save_casados",
+            output,
+            "Texto (Casados) gerado",
+        )
 
     def _generate_casados_text(
         self, data: Dict[str, str], cnh1_enabled: bool, cnh2_enabled: bool
@@ -734,23 +721,11 @@ class EventHandlers:
             )
 
     def on_copy_casados(self) -> None:
-        text = self.app.preview_casados.get("1.0", tk.END).strip()
-        if not text:
-            return
-        try:
-            self.app.clipboard_clear()
-            self.app.clipboard_append(text)
-            self.app.status.configure(
-                text="Copiado (Casados) para a área de transferência"
-            )
-        except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Não foi possível copiar: {exc}")
+        self._copy_preview_text(
+            "preview_casados", "Copiado (Casados) para a área de transferência"
+        )
 
     def on_save_casados(self) -> None:
-        text = self.app.preview_casados.get("1.0", tk.END).strip()
-        if not text:
-            messagebox.showinfo("Salvar", "Nada para salvar")
-            return
         nome1 = (self.app.vars["nome1"].get() or "").strip().replace(" ", "_")
         nome2 = (self.app.vars["nome2"].get() or "").strip().replace(" ", "_")
         cpf1_digits = only_digits(self.app.vars["cpf1"].get() or "")
@@ -758,222 +733,11 @@ class EventHandlers:
             f"qualificacao_casados_{nome1 or 'pessoa1'}_"
             f"{nome2 or 'pessoa2'}_{cpf1_digits or 'cpf'}.txt"
         )
-        file_path = filedialog.asksaveasfilename(
-            title="Salvar como",
-            defaultextension=".txt",
-            initialdir=str(self.app.base_dir),
-            initialfile=default_name,
-            filetypes=(("Texto", "*.txt"), ("Todos os arquivos", "*.*")),
-        )
-        if file_path:
-            try:
-                Path(file_path).write_text(text, encoding="utf-8")
-                self.app.status.configure(text=f"Arquivo salvo em {file_path}")
-            except Exception as exc:  # noqa: BLE001
-                messagebox.showerror("Erro", f"Erro ao salvar: {exc}")
+        self._save_preview_text("preview_casados", default_name)
 
     def on_clear_casados(self) -> None:
         self.reset_all_vars()
-        self.app.preview_casados.configure(state=tk.NORMAL)
-        self.app.preview_casados.delete("1.0", tk.END)
-        self.app.preview_casados.configure(state=tk.DISABLED)
-        self.app.btn_copy_casados.configure(state=tk.DISABLED)
-        self.app.btn_save_casados.configure(state=tk.DISABLED)
-        self.app.status.configure(text="Campos limpos")
-
-    def on_generate_empresa(self) -> None:
-        try:
-            data = self.values_from_inputs()
-
-            # Validar CNPJ se fornecido
-            cnpj = data.get("cnpj", "")
-            if cnpj and len(only_digits(cnpj)) == 14:
-                if not validar_cnpj(cnpj):
-                    logger.warning(f"CNPJ inválido fornecido: {cnpj}")
-                    messagebox.showwarning(
-                        "Atenção",
-                        "O CNPJ digitado é inválido. Verifique os dígitos.",
-                    )
-
-            # Mapear campos de endereço compartilhados para os campos específicos do template de empresa
-            # O formulário da empresa agora usa as chaves compartilhadas (logradouro, numero, etc.)
-            data["logradouro_empresa"] = data.get("logradouro", "")
-            data["numero_empresa"] = data.get("numero", "")
-            data["bairro_empresa"] = data.get("bairro", "")
-            data["cidade_empresa"] = data.get("cidade", "")
-            data["cep_empresa"] = data.get("cep", "")
-
-            # Calcular sufixos e artigos para o template
-            genero = data.get("genero_terminacao", "a")
-            data["sufixo_a"] = "" if genero == "o" else "a"
-
-            # Verificar se CNH está ativado
-            cnh_enabled = self.app.cnh_enabled_empresa.get()
-
-            try:
-                if cnh_enabled:
-                    data.setdefault("cnh_uf", "MT")
-                    data.setdefault("cnh_numero", "")
-                    data.setdefault("cnh_data_expedicao", "")
-                    output = render_template(
-                        self.app.template_text_empresa, data, strict=False
-                    )
-                else:
-                    output = render_template(
-                        self.app.template_text_empresa_sem_cnh, data, strict=False
-                    )
-            except KeyError as e:
-                logger.error(f"Campo obrigatório faltando no template empresa: {e}")
-                messagebox.showerror("Erro", f"Campo obrigatório faltando: {e}")
-                return
-            except ValueError as e:
-                logger.error(f"Valor inválido no template empresa: {e}")
-                messagebox.showerror("Erro", f"Valor inválido: {e}")
-                return
-            except Exception as e:
-                logger.exception("Erro inesperado ao gerar texto empresa")
-                messagebox.showerror("Erro", f"Erro ao gerar texto (Empresa): {e}")
-                return
-
-            self.app.preview_empresa.configure(state=tk.NORMAL)
-            self.app.preview_empresa.delete("1.0", tk.END)
-            self.app.preview_empresa.insert("1.0", output)
-            self.app.preview_empresa.configure(state=tk.DISABLED)
-            self.app.btn_copy_empresa.configure(state=tk.NORMAL)
-            self.app.btn_save_empresa.configure(state=tk.NORMAL)
-            self.app.status.configure(text="Texto (Empresa) gerado")
-
-            # Adicionar ao histórico
-            if self.config.get("historico.enabled", True):
-                try:
-                    self.history.add("modelo_empresa", data)
-                    logger.info(
-                        f"Empresa adicionada ao histórico: {data.get('razao_social', 'N/A')}"
-                    )
-                except Exception as e:
-                    logger.error(f"Erro ao salvar empresa no histórico: {e}")
-
-        except Exception as e:
-            logger.exception("Erro crítico ao gerar documento de empresa")
-            messagebox.showerror("Erro", f"Erro crítico: {e}")
-
-    def on_copy_empresa(self) -> None:
-        text = self.app.preview_empresa.get("1.0", tk.END).strip()
-        if not text:
-            return
-        try:
-            self.app.clipboard_clear()
-            self.app.clipboard_append(text)
-            self.app.status.configure(
-                text="Copiado (Empresa) para a área de transferência"
-            )
-        except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Não foi possível copiar: {exc}")
-
-    def on_save_empresa(self) -> None:
-        text = self.app.preview_empresa.get("1.0", tk.END).strip()
-        if not text:
-            return
-        try:
-            filename = filedialog.asksaveasfilename(
-                defaultextension=".txt",
-                filetypes=[
-                    ("Arquivos de texto", "*.txt"),
-                    ("Todos os arquivos", "*.*"),
-                ],
-            )
-            if filename:
-                with open(filename, "w", encoding="utf-8") as f:
-                    f.write(text)
-                self.app.status.configure(text=f"Arquivo salvo: {filename}")
-        except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Não foi possível salvar: {exc}")
-
-    def on_clear_empresa(self) -> None:
-        # Limpar campos da empresa
-        empresa_fields = [
-            "razao_social",
-            "cnpj",
-            "junta_comercial",
-            "nire",
-            # Campos visíveis no formulário da empresa (compartilhados)
-            "logradouro",
-            "numero",
-            "bairro",
-            "cidade",
-            "cep",
-            # Campos específicos internos/template
-            "logradouro_empresa",
-            "numero_empresa",
-            "quadra_empresa",
-            "lote_empresa",
-            "bairro_empresa",
-            "cidade_empresa",
-            "cep_empresa",
-            "email_empresa",
-            "numero_alteracao",
-            "numero_registro",
-            "data_registro",
-            "uf_junta",
-            "protocolo",
-            "data_certidao",
-            "autenticacao_eletronica",
-            "cargo_representante",
-            "nome_representante",
-            "nacionalidade_empresa",
-            "estado_civil_empresa",
-            "naturalidade",
-            "data_nascimento",
-            "nome_pai",
-            "nome_mae",
-            "cnh_uf",
-            "cnh_numero",
-            "cnh_data_expedicao",
-            "rg",
-            "orgao_rg",
-            "uf_rg",
-            "cpf",
-            "cpf_igual_rg",
-            "profissao",
-            "endereco_pessoal",
-            "email_pessoal",
-        ]
-
-        defaults = self.config.get_defaults()
-        defaults.update(
-            {
-                "junta_comercial": "JUCEMAT",
-                "numero_alteracao": "2ª",
-                "uf_junta": "MT",
-                "cargo_representante": "sócia administradora",
-                "nacionalidade_empresa": "brasileira",
-                "estado_civil_empresa": "casada",
-            }
-        )
-
-        for field in empresa_fields:
-            if field in self.app.vars:
-                var = self.app.vars[field]
-                if isinstance(var, tk.StringVar):
-                    var.set(defaults.get(field, ""))
-                elif isinstance(var, tk.BooleanVar):
-                    var.set(False)
-
-        # Restaurar switch de CNH para comportamento padrão da aba empresa.
-        if hasattr(self.app, "cnh_enabled_empresa"):
-            self.app.cnh_enabled_empresa.set(True)
-            try:
-                from .tabs.tab_empresa import _toggle_cnh_empresa
-            except ImportError:
-                from tabs.tab_empresa import _toggle_cnh_empresa  # type: ignore
-            _toggle_cnh_empresa(self.app)
-
-        # Limpar preview
-        self.app.preview_empresa.configure(state=tk.NORMAL)
-        self.app.preview_empresa.delete("1.0", tk.END)
-        self.app.preview_empresa.configure(state=tk.DISABLED)
-        self.app.btn_copy_empresa.configure(state=tk.DISABLED)
-        self.app.btn_save_empresa.configure(state=tk.DISABLED)
+        self._clear_preview("preview_casados", "btn_copy_casados", "btn_save_casados")
         self.app.status.configure(text="Campos limpos")
 
     def on_generate_imovel(self) -> None:
@@ -994,45 +758,25 @@ class EventHandlers:
             messagebox.showerror("Erro", f"Erro ao gerar texto (Imóvel): {exc}")
             return
 
-        self.app.preview_imovel.configure(state=tk.NORMAL)
-        self.app.preview_imovel.delete("1.0", tk.END)
-        self.app.preview_imovel.insert("1.0", output)
-        self.app.preview_imovel.configure(state=tk.DISABLED)
-        self.app.btn_copy_imovel.configure(state=tk.NORMAL)
-        self.app.btn_save_imovel.configure(state=tk.NORMAL)
-        self.app.status.configure(text="Texto (Imóvel) gerado")
+        self._set_preview_output(
+            "preview_imovel",
+            "btn_copy_imovel",
+            "btn_save_imovel",
+            output,
+            "Texto (Imóvel) gerado",
+        )
 
     def on_copy_imovel(self) -> None:
-        text = self.app.preview_imovel.get("1.0", tk.END).strip()
-        if not text:
-            return
-        try:
-            self.app.clipboard_clear()
-            self.app.clipboard_append(text)
-            self.app.status.configure(
-                text="Copiado (Imóvel) para a área de transferência"
-            )
-        except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Não foi possível copiar: {exc}")
+        self._copy_preview_text(
+            "preview_imovel", "Copiado (Imóvel) para a área de transferência"
+        )
 
     def on_save_imovel(self) -> None:
-        text = self.app.preview_imovel.get("1.0", tk.END).strip()
-        if not text:
-            return
-        try:
-            filename = filedialog.asksaveasfilename(
-                defaultextension=".txt",
-                filetypes=[
-                    ("Arquivos de texto", "*.txt"),
-                    ("Todos os arquivos", "*.*"),
-                ],
-            )
-            if filename:
-                with open(filename, "w", encoding="utf-8") as f:
-                    f.write(text)
-                self.app.status.configure(text=f"Arquivo salvo: {filename}")
-        except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Não foi possível salvar: {exc}")
+        cidade = (self.app.vars["cidade_imovel"].get() or "").strip().replace(" ", "_")
+        default_name = f"qualificacao_imovel_{cidade or 'imovel'}.txt"
+        self._save_preview_text(
+            "preview_imovel", default_name, show_empty_notice=False
+        )
 
     def on_clear_imovel(self) -> None:
         # Limpar campos do imóvel
@@ -1068,11 +812,7 @@ class EventHandlers:
         self.app.vars["area_unidade"].set("m²")
 
         # Limpar preview
-        self.app.preview_imovel.configure(state=tk.NORMAL)
-        self.app.preview_imovel.delete("1.0", tk.END)
-        self.app.preview_imovel.configure(state=tk.DISABLED)
-        self.app.btn_copy_imovel.configure(state=tk.DISABLED)
-        self.app.btn_save_imovel.configure(state=tk.DISABLED)
+        self._clear_preview("preview_imovel", "btn_copy_imovel", "btn_save_imovel")
         self.app.status.configure(text="Campos limpos")
 
     def on_extraction_select_files(self) -> None:
@@ -1110,7 +850,7 @@ class EventHandlers:
         extractor, setup_warnings = create_document_extractor()
         result = extractor.extract_from_files(files)
         if setup_warnings:
-            result.warnings = setup_warnings + result.warnings
+            result.warnings = list(dict.fromkeys([*setup_warnings, *result.warnings]))
         self.app.extraction_data = result.fields
         self.app.extraction_raw_text = result.raw_text
         target = str(getattr(self.app, "extraction_target").get())
@@ -1149,9 +889,6 @@ class EventHandlers:
                 "cidade",
                 "cep",
                 "email",
-                "razao_social",
-                "cnpj",
-                "nire",
                 "cert_matricula",
                 "cert_casamento_matricula",
                 "cert_data",
@@ -1247,7 +984,7 @@ class EventHandlers:
             key = "tratamento1"
         elif target == "CASADOS - Pessoa 2":
             key = "tratamento2"
-        elif target in {"MODELO SIMPLES", "CERTIDÃO", "EMPRESA - Representante"}:
+        elif target in {"MODELO SIMPLES", "CERTIDÃO"}:
             key = "tratamento"
         else:
             return
@@ -1269,8 +1006,6 @@ class EventHandlers:
             return _value("cnh_enabled1")
         if target == "CASADOS - Pessoa 2":
             return _value("cnh_enabled2")
-        if target == "EMPRESA - Representante":
-            return _value("cnh_enabled_empresa")
         return False
 
     def _get_extraction_target_maps(self) -> Dict[str, Dict[str, str]]:
@@ -1348,36 +1083,6 @@ class EventHandlers:
             "regime_casamento": "regime_casamento",
             "cert_casamento_matricula": "cert_casamento_matricula",
         }
-        empresa_representante_map = {
-            "nome": "nome_representante",
-            "nacionalidade": "nacionalidade_empresa",
-            "estado_civil": "estado_civil_empresa",
-            "naturalidade": "naturalidade",
-            "data_nascimento": "data_nascimento",
-            "nome_pai": "nome_pai",
-            "nome_mae": "nome_mae",
-            "rg": "rg",
-            "orgao_rg": "orgao_rg",
-            "uf_rg": "uf_rg",
-            "cpf": "cpf",
-            "cnh_uf": "cnh_uf",
-            "cnh_numero": "cnh_numero",
-            "cnh_data_expedicao": "cnh_data_expedicao",
-            "profissao": "profissao",
-            "email": "email_pessoal",
-            "logradouro": "endereco_pessoal",
-        }
-        empresa_dados_map = {
-            "razao_social": "razao_social",
-            "cnpj": "cnpj",
-            "nire": "nire",
-            "logradouro": "logradouro_empresa",
-            "numero": "numero_empresa",
-            "bairro": "bairro_empresa",
-            "cidade": "cidade_empresa",
-            "cep": "cep_empresa",
-            "email": "email_empresa",
-        }
         imovel_map = {
             "cidade": "cidade_imovel",
             "loteamento": "loteamento",
@@ -1387,8 +1092,6 @@ class EventHandlers:
             "CERTIDÃO": certidao_person_map,
             "CASADOS - Pessoa 1": casados_p1_map,
             "CASADOS - Pessoa 2": casados_p2_map,
-            "EMPRESA - Representante": empresa_representante_map,
-            "EMPRESA - Dados da Empresa": empresa_dados_map,
             "IMÓVEIS": imovel_map,
         }
 
@@ -1425,8 +1128,6 @@ class EventHandlers:
 
             if "cpf" in target_key:
                 value = format_cpf(value)
-            elif "cnpj" in target_key:
-                value = format_cnpj(value)
             elif "cep" in target_key:
                 value = format_cep(value)
             elif "data" in target_key:
@@ -1434,22 +1135,6 @@ class EventHandlers:
 
             var.set(value)
             applied += 1
-
-        # Complemento para endereço pessoal do representante
-        if target == "EMPRESA - Representante":
-            endereco_parts = [
-                extracted.get("logradouro", "").strip(),
-                extracted.get("numero", "").strip(),
-                extracted.get("bairro", "").strip(),
-                extracted.get("cidade", "").strip(),
-                extracted.get("cep", "").strip(),
-            ]
-            endereco = ", ".join(part for part in endereco_parts if part)
-            if endereco and isinstance(
-                self.app.vars.get("endereco_pessoal"), tk.StringVar
-            ):
-                self.app.vars["endereco_pessoal"].set(endereco)
-                applied += 1
 
         return applied
 
@@ -1461,7 +1146,7 @@ class EventHandlers:
             key = "tratamento1"
         elif target == "CASADOS - Pessoa 2":
             key = "tratamento2"
-        elif target in {"MODELO SIMPLES", "CERTIDÃO", "EMPRESA - Representante"}:
+        elif target in {"MODELO SIMPLES", "CERTIDÃO"}:
             key = "tratamento"
         else:
             return
@@ -1477,8 +1162,6 @@ class EventHandlers:
             "CERTIDÃO": "CERTIDÃO",
             "CASADOS - Pessoa 1": "CASADOS",
             "CASADOS - Pessoa 2": "CASADOS",
-            "EMPRESA - Representante": "EMPRESA",
-            "EMPRESA - Dados da Empresa": "EMPRESA",
             "IMÓVEIS": "IMÓVEIS",
         }
         return target_tabs.get(target, "")
@@ -1490,8 +1173,6 @@ class EventHandlers:
             self.on_generate_cert()
         elif target in {"CASADOS - Pessoa 1", "CASADOS - Pessoa 2"}:
             self.on_generate_casados()
-        elif target in {"EMPRESA - Representante", "EMPRESA - Dados da Empresa"}:
-            self.on_generate_empresa()
         elif target == "IMÓVEIS":
             self.on_generate_imovel()
 

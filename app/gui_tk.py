@@ -79,13 +79,12 @@ except ImportError:
     )
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2.2.2"
+APP_VERSION = "2.3.0"
 PROJECT_GITHUB_URL = "https://github.com/ifwednesday/program"
 SIDEBAR_ITEMS = (
     ("MODELO SIMPLES", "Modelo Simples", "MS"),
     ("CERTIDÃO", "Certidão", "CT"),
     ("CASADOS", "Casados", "CS"),
-    ("EMPRESA", "Empresa", "EP"),
     ("IMÓVEIS", "Imóveis", "IM"),
     ("EXTRAÇÃO", "Extração", "EX"),
     ("SOBRE", "Sobre", "SB"),
@@ -182,12 +181,6 @@ class App(tk.Tk):
             )
             self.template_text_casados_sem_cnh = load_template_text(
                 templates_dir / "modelo_5_casados_sem_cnh.json"
-            )
-            self.template_text_empresa = load_template_text(
-                templates_dir / "modelo_6_empresa.json"
-            )
-            self.template_text_empresa_sem_cnh = load_template_text(
-                templates_dir / "modelo_6_empresa_sem_cnh.json"
             )
             self.template_text_imovel = load_template_text(
                 templates_dir / "modelo_7_imovel.json"
@@ -353,48 +346,8 @@ class App(tk.Tk):
         self.cnh_enabled1 = tk.BooleanVar(value=False)
         self.cnh_enabled2 = tk.BooleanVar(value=False)
         self.cnh_enabled_certidao = tk.BooleanVar(value=False)
-        self.cnh_enabled_empresa = tk.BooleanVar(
-            value=True
-        )  # Default True porque template atual usa CNH
         self.casados_modelo_alternativo = tk.BooleanVar(value=False)
         self.imovel_modelo_alternativo = tk.BooleanVar(value=False)
-
-        # Variáveis da empresa
-        self.vars["razao_social"] = tk.StringVar(value="")
-        self.vars["cnpj"] = tk.StringVar(value="")
-        self.vars["junta_comercial"] = tk.StringVar(value="JUCEMAT")
-        self.vars["nire"] = tk.StringVar(value="")
-        self.vars["quadra_empresa"] = tk.StringVar(value="")
-        self.vars["lote_empresa"] = tk.StringVar(value="")
-        self.vars["logradouro_empresa"] = tk.StringVar(
-            value=cfg("logradouro_empresa", "Rua Campo Novo")
-        )
-        self.vars["numero_empresa"] = tk.StringVar(value=cfg("numero_empresa", "56"))
-        self.vars["bairro_empresa"] = tk.StringVar(
-            value=cfg("bairro_empresa", "Sant'Ana")
-        )
-        self.vars["cidade_empresa"] = tk.StringVar(
-            value=cfg("cidade_empresa", "Nova Xavantina-MT")
-        )
-        self.vars["cep_empresa"] = tk.StringVar(value=cfg("cep_empresa", "78690-000"))
-        self.vars["email_empresa"] = tk.StringVar(
-            value=cfg("email_empresa", "não declarado")
-        )
-        self.vars["numero_alteracao"] = tk.StringVar(value="2ª")
-        self.vars["numero_registro"] = tk.StringVar(value="")
-        self.vars["data_registro"] = tk.StringVar(value="")
-        self.vars["uf_junta"] = tk.StringVar(value="MT")
-        self.vars["protocolo"] = tk.StringVar(value="")
-        self.vars["data_certidao"] = tk.StringVar(value="")
-        self.vars["autenticacao_eletronica"] = tk.StringVar(value="")
-        self.vars["cargo_representante"] = tk.StringVar(value="sócia administradora")
-        self.vars["nome_representante"] = tk.StringVar(value="")
-        self.vars["nacionalidade_empresa"] = tk.StringVar(value="brasileira")
-        self.vars["estado_civil_empresa"] = tk.StringVar(value="casada")
-        self.vars["endereco_pessoal"] = tk.StringVar(value="")
-        self.vars["email_pessoal"] = tk.StringVar(
-            value=cfg("email_pessoal", "não declarado")
-        )
 
         # Variáveis do imóvel
         self.vars["quantidade_imovel"] = tk.StringVar(value="Um (01)")
@@ -425,12 +378,6 @@ class App(tk.Tk):
         )
         self._bind_treatment_defaults(
             tratamento_key="tratamento2", genero_key="genero_terminacao2"
-        )
-        self._bind_treatment_defaults(
-            tratamento_key="tratamento",
-            genero_key="genero_terminacao",
-            nacionalidade_key="nacionalidade_empresa",
-            estado_civil_key="estado_civil_empresa",
         )
 
     def _bind_treatment_defaults(
@@ -537,7 +484,6 @@ class App(tk.Tk):
         self._build_modelo_tab(self.notebook)
         self._build_certidao_tab(self.notebook)
         self._build_casados_tab(self.notebook)
-        self._build_empresa_tab(self.notebook)
         self._build_imovel_tab(self.notebook)
         self._build_extracao_tab(self.notebook)
         self._build_about_tab(self.notebook)
@@ -615,17 +561,6 @@ class App(tk.Tk):
     def _build_casados_tab(self, notebook: ctk.CTkTabview) -> None:
         tab_casados = notebook.add("CASADOS")
         build_tab_casados(notebook, tab_casados, self)
-
-    def _build_empresa_tab(self, notebook: ctk.CTkTabview) -> None:
-        tab_empresa = notebook.add("EMPRESA")
-        try:
-            from .tabs.tab_empresa import build_tab_empresa
-
-            build_tab_empresa(notebook, tab_empresa, self)
-        except ImportError:
-            from tabs.tab_empresa import build_tab_empresa  # type: ignore
-
-            build_tab_empresa(notebook, tab_empresa, self)
 
     def _build_imovel_tab(self, notebook: ctk.CTkTabview) -> None:
         tab_imovel = notebook.add("IMÓVEIS")

@@ -34,8 +34,6 @@ TARGET_OPTIONS = [
     "CERTIDÃO",
     "CASADOS - Pessoa 1",
     "CASADOS - Pessoa 2",
-    "EMPRESA - Representante",
-    "EMPRESA - Dados da Empresa",
     "IMÓVEIS",
 ]
 

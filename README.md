@@ -1,175 +1,178 @@
 # Qualificador
 
-Sistema desktop para geração de qualificações de partes em documentos jurídicos.
+Aplicação desktop em Python para geração de qualificações e trechos padronizados em documentos jurídicos.
 
-Versão atual: `2.2.2`
+O projeto combina formulários estruturados, templates JSON e extração assistida de dados a partir de PDF e imagem. O foco é reduzir retrabalho operacional sem perder previsibilidade na saída gerada.
 
-## 📋 Descrição
+## Visão geral
 
-O Qualificador é uma aplicação desktop desenvolvida em Python que facilita a criação de qualificações completas de partes (pessoas físicas, jurídicas, casais, imóveis, etc.) utilizando templates pré-configurados.
+O aplicativo atende aos seguintes fluxos:
 
-## ✨ Funcionalidades
+- modelo simples de pessoa física
+- certidão
+- casados
+- imóveis
+- extração assistida para preenchimento das abas acima
 
-- 🆔 Qualificação de pessoas físicas (com ou sem CNH)
-- 👰 Qualificação de casais (com ou sem CNH)
-- 📄 Qualificação de certidões
-- 🏢 Qualificação de empresas
-- 🏠 Qualificação de imóveis
-- 📝 Sistema de templates personalizáveis
-- 💾 Histórico de qualificações recentes
-- 🧹 Limpeza de cache por botão na interface
-- ⌨️ Atalhos de teclado para produtividade
-- 🎨 Interface moderna e intuitiva
+Comportamentos centrais da aplicação:
 
-## 🚀 Download
+- preserva os dados digitados ao alternar entre abas
+- gera texto a partir de templates JSON versionáveis
+- reaproveita campos compartilhados entre fluxos compatíveis
+- mantém histórico local dos documentos gerados
+- oferece atalhos de teclado e ações de limpeza pela interface
 
-Faça o download da versão mais recente na [página de Releases](../../releases).
+## Recursos
 
-Arquivos disponíveis para download:
-- `Qualificador.exe` - Executável principal
-- `config.json` - Arquivo de configuração (opcional)
-- `LICENSE` - Licença do projeto
+- interface desktop com Tkinter e CustomTkinter
+- geração de texto para múltiplos cenários jurídicos
+- suporte a extração local com leitura direta de PDF e OCR
+- integração opcional com provedor remoto de extração
+- pipeline opcional de pré-processamento e classificação local
+- empacotamento para distribuição com PyInstaller
 
-## 💻 Uso
+## Requisitos
 
-1. Baixe o arquivo `Qualificador.exe` da última release
-2. Execute o arquivo (não precisa instalação)
-3. Selecione a aba correspondente ao tipo de qualificação
-4. Preencha os campos necessários
-5. Clique em "Copiar" para copiar a qualificação formatada
-6. Use "Limpar cache" na barra inferior quando quiser limpar caches temporários
+- Python 3.10 ou superior
+- Tk 8.6 ou superior
+- dependências listadas em `requirements.txt`
 
-## 🛠️ Desenvolvimento
+Observação para macOS:
 
-### Requisitos
+- evite `/usr/bin/python3` do Command Line Tools em versões recentes do sistema
+- esse runtime costuma vir com Tk 8.5 e pode abortar ao abrir a interface
 
-- Python 3.10+ (recomendado 3.11 ou 3.12)
-- Dependências listadas em `requirements.txt`
-
-> **Importante (macOS 26+)**: não use `/usr/bin/python3` (Command Line Tools, Tk 8.5).
-> Esse runtime pode abortar ao abrir a interface Tk.
-> Use Python instalado via python.org (ou outro distribuidor com Tk 8.6).
-
-### Instalação para desenvolvimento
+## Instalação
 
 ```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/qualificador.git
-cd qualificador
+git clone <url-do-repositorio>
+cd <pasta-do-projeto>
 
-# Crie um ambiente virtual
-python -m venv env
-
-# Ative o ambiente virtual
-# Windows:
-env\Scripts\activate
-# Linux/Mac:
-source env/bin/activate
-
-# Instale as dependências
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Executar em modo de desenvolvimento
+## Execução local
 
 ```bash
 python main.py
 ```
 
-### Build do executável
+## Build
 
 ```bash
 python build.py
 ```
 
-O executável será gerado em `dist/Qualificador.exe`.
+O binário gerado fica em `dist/Qualificador.exe` no Windows e em `dist/Qualificador` nos ambientes compatíveis usados para validação local.
 
-### Ferramentas de desenvolvimento
+## Extração de dados
 
-O projeto utiliza:
-- **Black**: Formatação de código
-- **isort**: Organização de imports
-- **Flake8**: Linting
-- **MyPy**: Type checking
+### Modo padrão
+
+O modo padrão usa processamento local:
+
+- leitura estruturada de PDF quando possível
+- OCR local para arquivos convertidos em imagem
+- fallback automático entre estratégias disponíveis
+
+### Provedor remoto opcional
+
+Para usar o provedor remoto:
 
 ```bash
-# Formatar código
-black .
-
-# Organizar imports
-isort .
-
-# Verificar linting
-flake8 .
-
-# Verificar tipos
-mypy .
+export GEMINI_API_KEY=...
+export EXTRACTION_PROVIDER=gemini
 ```
 
-### Extração ML (opcional)
+### Pipeline local opcional
 
-Para extração mais robusta de RG/CPF/CNH com imagens inclinadas (frente/verso), use o modo ML:
+Para cenários com imagem difícil, orientação ruim ou OCR inconsistente, existe um pipeline local opcional de pré-processamento e classificação:
 
 ```bash
 pip install -r requirements-ml.txt
 export EXTRACTION_PROVIDER=ml
 ```
 
-Guia completo de dataset/treino: `docs/ml-extracao-documentos.md`.
+Se houver um classificador treinado, o caminho pode ser informado por variável de ambiente:
 
-## 📁 Estrutura do Projeto
-
-```
-qualificador/
-├── app/                    # Código fonte principal
-│   ├── constants/          # Constantes e dados estáticos
-│   ├── tabs/               # Implementação das abas
-│   ├── ui_builders/        # Construtores de interface
-│   ├── config.py           # Configurações
-│   ├── gui_tk.py           # Interface principal
-│   ├── handlers.py         # Handlers de eventos
-│   ├── history.py          # Gestão de histórico
-│   ├── logger.py           # Sistema de logs
-│   ├── shortcuts.py        # Atalhos de teclado
-│   ├── styles.py           # Estilos visuais
-│   ├── template_engine.py  # Engine de templates
-│   └── validators.py       # Validadores de dados
-├── templates/              # Templates de qualificação
-├── .github/                # Workflows do GitHub Actions
-├── main.py                 # Ponto de entrada
-├── build.py                # Script de build
-├── config.json             # Configuração padrão
-└── requirements.txt        # Dependências Python
+```bash
+export ML_DOC_MODEL_PATH=app/models/doc_classifier.joblib
 ```
 
-## 🤝 Contribuindo
+Documentação complementar:
 
-Contribuições são bem-vindas! Sinta-se à vontade para:
+- [docs/ml-extracao-documentos.md](docs/ml-extracao-documentos.md)
 
-1. Fazer um fork do projeto
-2. Criar uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
-5. Abrir um Pull Request
+## Configuração
 
-## 📝 Licença
+O arquivo `config.json` centraliza parâmetros de execução, como:
 
-Este projeto utiliza uma **Licença de Uso Pessoal Não-Comercial**:
+- valores padrão de formulários
+- dimensões iniciais da janela
+- política de histórico
+- nível de log
 
-- ✅ **Uso pessoal**: GRATUITO para indivíduos
-- ✅ **Profissionais autônomos**: Podem usar para seu próprio trabalho
-- ❌ **Empresas/Organizações**: REQUEREM licença comercial paga
-- ❌ **Uso comercial**: PROIBIDO sem licença apropriada
+## Qualidade
 
-**Para uso comercial/empresarial**, entre em contato através das [issues](../../issues) do projeto para obter uma licença comercial.
+Verificações recomendadas:
 
-Veja o arquivo [LICENSE](LICENSE) para todos os termos e condições detalhados.
+```bash
+black .
+isort .
+./.venv/bin/python -m flake8 app main.py build.py
+./.venv/bin/python -m mypy app main.py build.py
+./.venv/bin/python -m py_compile main.py build.py $(rg --files app -g '*.py')
+```
 
-## 📞 Contato
+## Estrutura do repositório
 
-Para dúvidas, sugestões ou reportar problemas, abra uma [issue](../../issues) no GitHub.
+```text
+.
+├── app/
+│   ├── constants/
+│   ├── extractors/
+│   ├── tabs/
+│   ├── ui_builders/
+│   ├── config.py
+│   ├── extraction.py
+│   ├── gui_tk.py
+│   ├── handlers.py
+│   ├── history.py
+│   ├── logger.py
+│   ├── ml_extraction.py
+│   ├── shortcuts.py
+│   ├── styles.py
+│   ├── template_engine.py
+│   └── validators.py
+├── docs/
+├── Scripts/ml/
+├── templates/
+├── .github/workflows/
+├── build.py
+├── config.json
+├── main.py
+├── pyproject.toml
+├── requirements.txt
+└── requirements-ml.txt
+```
 
----
+## Release
 
-**Desenvolvido com ❤️ em Python**
+O pipeline de release está em `.github/workflows/build-release.yml` e executa:
 
+- checkout do código
+- preparação do Python
+- instalação de dependências
+- build com `python build.py`
+- publicação dos artefatos na release
+
+## Licença
+
+Este repositório utiliza licença de uso pessoal não comercial.
+
+Consulte:
+
+- [LICENSE](LICENSE)
+- [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md)

@@ -300,7 +300,7 @@ class MLHybridDocumentExtractor:
 
     def _extract_image(self, file_path: Path) -> _PerFileExtraction:
         if Image is None:
-            text, warnings = self.local_extractor._extract_single(file_path)
+            text, fallback_warnings = self.local_extractor._extract_single(file_path)
             fields = self.local_extractor.parse_fields(text) if text else {}
             fields.update(self._extract_cnh_fields(text))
             score = self.local_extractor._score_ocr_text(text)
@@ -312,7 +312,7 @@ class MLHybridDocumentExtractor:
                 score=score,
                 doc_type=doc_type,
                 doc_side=doc_side,
-                warnings=warnings,
+                warnings=fallback_warnings,
             )
 
         warnings: List[str] = []

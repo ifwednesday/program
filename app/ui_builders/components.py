@@ -88,15 +88,6 @@ class EntryFactory:
                 from validators import auto_format_date  # type: ignore
 
                 entry.bind("<KeyRelease>", auto_format_date)
-        elif field_type == "cnpj":
-            try:
-                from ..validators import auto_format_cnpj
-
-                entry.bind("<KeyRelease>", auto_format_cnpj)
-            except ImportError:
-                from validators import auto_format_cnpj  # type: ignore
-
-                entry.bind("<KeyRelease>", auto_format_cnpj)
 
         return entry
 

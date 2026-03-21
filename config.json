@@ -36,15 +36,6 @@
     "cidade_casados": "Nova Xavantina-MT",
     "cep_casados": "78690-000"
   },
-  "defaults_empresa": {
-    "logradouro_empresa": "Rua Campo Novo",
-    "numero_empresa": "56",
-    "bairro_empresa": "Sant'Ana",
-    "cidade_empresa": "Nova Xavantina-MT",
-    "cep_empresa": "78690-000",
-    "email_empresa": "não declarado",
-    "email_pessoal": "não declarado"
-  },
   "defaults_imovel": {
     "cidade_imovel": "Nova Xavantina"
   },

@@ -94,7 +94,6 @@
     <Compile Include="app\styles.py" />
     <Compile Include="app\tabs\tab_casados.py" />
     <Compile Include="app\tabs\tab_certidao.py" />
-    <Compile Include="app\tabs\tab_empresa.py" />
     <Compile Include="app\tabs\tab_imovel.py" />
     <Compile Include="app\tabs\__init__.py" />
     <Compile Include="app\template_engine.py" />
