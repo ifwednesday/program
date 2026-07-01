@@ -6,13 +6,13 @@ Workflow automatizado para build e publicação do executável Qualificador.
 
 ### Quando é executado:
 
-1. **Automaticamente**: Quando você publica uma release no GitHub
+1. **Automaticamente**: push em `master`, push de tag `v*`, pull request para `master`, ou publicação de release no GitHub
 2. **Manualmente**: Via interface do GitHub Actions (aba Actions)
 
 ### O que faz:
 
 1. ✅ Faz checkout do código
-2. 🐍 Configura Python 3.9
+2. 🐍 Configura Python 3.11
 3. 📦 Instala as dependências do `requirements.txt`
 4. 🔨 Executa o `build.py` para criar o executável
 5. ✔️ Verifica se o `.exe` foi criado corretamente
