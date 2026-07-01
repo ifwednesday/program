@@ -181,7 +181,7 @@ def build_tab_extracao(
         font=(FONT_FAMILY, 11),
     ).pack(anchor="w", padx=14, pady=(0, 12))
 
-    ctk.CTkButton(
+    app.btn_extraction_run = ctk.CTkButton(
         left,
         text="Extrair Informações",
         command=app.handlers.on_extraction_run,
@@ -193,7 +193,8 @@ def build_tab_extracao(
         border_width=1,
         border_color=BORDER,
         height=36,
-    ).pack(fill="x", padx=14, pady=(0, 6))
+    )
+    app.btn_extraction_run.pack(fill="x", padx=14, pady=(0, 6))
 
     ctk.CTkButton(
         left,
