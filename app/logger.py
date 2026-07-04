@@ -68,8 +68,3 @@ def setup_logging(
     logging.info(f"Nível de log: {level}")
     logging.info(f"Arquivo de log: {log_file}")
 
-
-def get_logger(name: str) -> logging.Logger:
-    """Obtém logger para módulo específico"""
-    return logging.getLogger(name)
-

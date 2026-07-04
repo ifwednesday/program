@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import shutil
+import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox
@@ -847,8 +848,46 @@ class EventHandlers:
             messagebox.showinfo("Extração", "Selecione ao menos um PDF ou imagem.")
             return
 
-        extractor, setup_warnings = create_document_extractor()
-        result = extractor.extract_from_files(files)
+        if getattr(self, "_extraction_in_progress", False):
+            return
+        self._extraction_in_progress = True
+
+        button = getattr(self.app, "btn_extraction_run", None)
+        if button is not None:
+            button.configure(state="disabled", text="Extraindo...")
+        self.app.status.configure(text="Extraindo informações, aguarde...")
+
+        def worker() -> None:
+            try:
+                extractor, setup_warnings = create_document_extractor()
+                result = extractor.extract_from_files(files)
+            except Exception as exc:  # noqa: BLE001
+                self.app.after(0, lambda exc=exc: self._fail_extraction_run(exc, button))
+                return
+            self.app.after(
+                0,
+                lambda: self._finish_extraction_run(
+                    extractor, setup_warnings, result, button
+                ),
+            )
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _fail_extraction_run(self, exc: Exception, button: object) -> None:
+        self._extraction_in_progress = False
+        if button is not None:
+            button.configure(state="normal", text="Extrair Informações")
+        logger.exception("Erro ao extrair documento(s)")
+        self.app.status.configure(text="Falha na extração")
+        messagebox.showerror("Extração", f"Erro ao extrair documento(s): {exc}")
+
+    def _finish_extraction_run(
+        self, extractor, setup_warnings: List[str], result, button: object
+    ) -> None:
+        self._extraction_in_progress = False
+        if button is not None:
+            button.configure(state="normal", text="Extrair Informações")
+
         if setup_warnings:
             result.warnings = list(dict.fromkeys([*setup_warnings, *result.warnings]))
         self.app.extraction_data = result.fields

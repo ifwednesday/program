@@ -29,6 +29,13 @@ def _load_pdf_reader_class() -> Any:
 PdfReaderClass = _load_pdf_reader_class()
 
 try:
+    from ..validators import format_cpf as _shared_format_cpf
+    from ..validators import validar_cpf as _shared_validar_cpf
+except ImportError:
+    from validators import format_cpf as _shared_format_cpf  # type: ignore
+    from validators import validar_cpf as _shared_validar_cpf  # type: ignore
+
+try:
     from PIL import Image, ImageEnhance, ImageOps  # type: ignore
 except Exception:  # noqa: BLE001
     Image = None  # type: ignore[assignment]
@@ -1494,26 +1501,11 @@ class DocumentExtractor:
 
     @staticmethod
     def _format_cpf_digits(digits: str) -> str:
-        if len(digits) != 11:
-            return digits
-        return f"{digits[0:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:11]}"
+        return _shared_format_cpf(digits)
 
     @staticmethod
     def _is_valid_cpf(digits: str) -> bool:
-        if len(digits) != 11:
-            return False
-        if digits == digits[0] * 11:
-            return False
-        nums = [int(ch) for ch in digits]
-        sum1 = sum(num * weight for num, weight in zip(nums[:9], range(10, 1, -1)))
-        d1 = (sum1 * 10) % 11
-        d1 = 0 if d1 == 10 else d1
-        if d1 != nums[9]:
-            return False
-        sum2 = sum(num * weight for num, weight in zip(nums[:10], range(11, 1, -1)))
-        d2 = (sum2 * 10) % 11
-        d2 = 0 if d2 == 10 else d2
-        return d2 == nums[10]
+        return _shared_validar_cpf(digits)
 
     def _clean_person_name(self, value: str) -> str:
         text = self._clean_value(value)
